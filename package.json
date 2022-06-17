@@ -6,6 +6,9 @@
   "files": [
     "dist"
   ],
+  "scripts": {
+    "prepack": "rm -rf dist && tsc"
+  },
   "devDependencies": {
     "@types/jest": "^28.1.2",
     "esbuild": "^0.14.45",
