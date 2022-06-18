@@ -1,4 +1,4 @@
-import { foo as double } from ".";
+import { double } from ".";
 
 describe("double", () => {
   it("works", () => {
