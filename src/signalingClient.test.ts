@@ -1,6 +1,6 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { connect } from "./client";
+import { connect } from "./signalingClient";
 
 describe("offer & seek", () => {
   let server: WebSocketServer;
