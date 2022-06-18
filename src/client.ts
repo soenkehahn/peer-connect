@@ -3,8 +3,14 @@ export type Peer = {
   nextReceived: Promise<string>;
 };
 
-export const connect = async (url: string): Promise<Peer> => {
-  const websocket = new WebSocket(url);
+export const connect = async (args: {
+  url: string;
+  offer: string;
+  seek: string;
+}): Promise<Peer> => {
+  const websocket = new WebSocket(
+    `${args.url}/?offer=${args.offer}&seek=${args.seek}`
+  );
   await new Promise<void>((resolve) => {
     websocket.onopen = () => {
       resolve();

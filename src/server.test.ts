@@ -33,24 +33,24 @@ describe("runServer", () => {
   });
 
   it("relays messages from a to b", async () => {
-    const a = await openWebsocket(url);
-    const b = await openWebsocket(url);
+    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
+    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
     const received = nextReceived(b);
     a.send("test message");
     expect(await received).toEqual("test message");
   });
 
   it("relays messages from b to a", async () => {
-    const a = await openWebsocket(url);
-    const b = await openWebsocket(url);
+    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
+    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
     const received = nextReceived(a);
     b.send("test message");
     expect(await received).toEqual("test message");
   });
 
   it("relays multiple messages in both directions", async () => {
-    const a = await openWebsocket(url);
-    const b = await openWebsocket(url);
+    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
+    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
 
     let receivedByA = nextReceived(a);
     b.send("from b 1");
@@ -67,5 +67,21 @@ describe("runServer", () => {
     receivedByB = nextReceived(b);
     a.send("from a 2");
     expect(await receivedByB).toEqual("from a 2");
+  });
+
+  it("allows to offer and seek things by string", async () => {
+    const a = await openWebsocket(`${url}?offer=a&seek=b`);
+    const b = await openWebsocket(`${url}?offer=b&seek=a`);
+
+    const x = await openWebsocket(`${url}?offer=x&seek=y`);
+    const y = await openWebsocket(`${url}?offer=y&seek=x`);
+
+    const receivedByB = nextReceived(b);
+    a.send("from a");
+    expect(await receivedByB).toEqual("from a");
+
+    const receivedByY = nextReceived(y);
+    x.send("from x");
+    expect(await receivedByY).toEqual("from x");
   });
 });
