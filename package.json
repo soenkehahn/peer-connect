@@ -1,5 +1,5 @@
 {
-  "name": "peer-connect",
+  "name": "@shahn/peer-connect",
   "version": "0.0.0",
   "packageManager": "yarn@3.2.1",
   "main": "dist/index.js",
@@ -7,7 +7,7 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "rm -rf dist && tsc"
+    "prepack": "jest && rm -rf dist && tsc"
   },
   "devDependencies": {
     "@types/jest": "^28.1.2",
