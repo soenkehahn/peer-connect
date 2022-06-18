@@ -10,7 +10,7 @@ const openWebsocket = (url: string): Promise<WebSocket> => {
   });
 };
 
-const nextMessage = (websocket: WebSocket): Promise<string> => {
+const nextReceived = (websocket: WebSocket): Promise<string> => {
   return new Promise<string>((resolve) => {
     websocket.onmessage = (event) => {
       resolve(event.data);
@@ -20,52 +20,52 @@ const nextMessage = (websocket: WebSocket): Promise<string> => {
 
 describe("runServer", () => {
   let server: WebSocketServer;
-  let baseUrl: string;
+  let url: string;
 
   beforeEach(() => {
     server = runServer({ port: 0 });
     const port = (server.address() as AddressInfo).port;
-    baseUrl = `ws://localhost:${port}`;
+    url = `ws://localhost:${port}`;
   });
 
   afterEach(() => {
     server.close();
   });
 
-  it("relays messages from seeker to offerer", async () => {
-    const offeringWebsocket = await openWebsocket(`${baseUrl}/offer`);
-    const messagePromise = nextMessage(offeringWebsocket);
-    const seekingWebsocket = await openWebsocket(`${baseUrl}/seek`);
-    seekingWebsocket.send("test message");
-    expect(await messagePromise).toEqual("test message");
+  it("relays messages from a to b", async () => {
+    const a = await openWebsocket(url);
+    const b = await openWebsocket(url);
+    const received = nextReceived(b);
+    a.send("test message");
+    expect(await received).toEqual("test message");
   });
 
-  it("relays messages from offerer to seeker", async () => {
-    const offeringWebsocket = await openWebsocket(`${baseUrl}/offer`);
-    const seekingWebsocket = await openWebsocket(`${baseUrl}/seek`);
-    const messagePromise = nextMessage(seekingWebsocket);
-    offeringWebsocket.send("test message");
-    expect(await messagePromise).toEqual("test message");
+  it("relays messages from b to a", async () => {
+    const a = await openWebsocket(url);
+    const b = await openWebsocket(url);
+    const received = nextReceived(a);
+    b.send("test message");
+    expect(await received).toEqual("test message");
   });
 
   it("relays multiple messages in both directions", async () => {
-    const offeringWebsocket = await openWebsocket(`${baseUrl}/offer`);
-    const seekingWebsocket = await openWebsocket(`${baseUrl}/seek`);
+    const a = await openWebsocket(url);
+    const b = await openWebsocket(url);
 
-    let receivedByOfferer = nextMessage(offeringWebsocket);
-    seekingWebsocket.send("from seeker 1");
-    expect(await receivedByOfferer).toEqual("from seeker 1");
+    let receivedByA = nextReceived(a);
+    b.send("from b 1");
+    expect(await receivedByA).toEqual("from b 1");
 
-    receivedByOfferer = nextMessage(offeringWebsocket);
-    seekingWebsocket.send("from seeker 2");
-    expect(await receivedByOfferer).toEqual("from seeker 2");
+    receivedByA = nextReceived(a);
+    b.send("from b 2");
+    expect(await receivedByA).toEqual("from b 2");
 
-    let receivedBySeeker = nextMessage(seekingWebsocket);
-    offeringWebsocket.send("from offerer 1");
-    expect(await receivedBySeeker).toEqual("from offerer 1");
+    let receivedByB = nextReceived(b);
+    a.send("from a 1");
+    expect(await receivedByB).toEqual("from a 1");
 
-    receivedBySeeker = nextMessage(seekingWebsocket);
-    offeringWebsocket.send("from offerer 2");
-    expect(await receivedBySeeker).toEqual("from offerer 2");
+    receivedByB = nextReceived(b);
+    a.send("from a 2");
+    expect(await receivedByB).toEqual("from a 2");
   });
 });

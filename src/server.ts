@@ -1,18 +1,19 @@
 import { WebSocketServer, WebSocket, MessageEvent } from "ws";
 
-let offerer: null | WebSocket = null;
-let seeker: null | WebSocket = null;
-
 export const runServer = ({ port }: { port: number }): WebSocketServer => {
+  const clients: Set<WebSocket> = new Set();
   const server = new WebSocketServer({ port });
   server.addListener("connection", (websocket: WebSocket, request) => {
     switch (request.url) {
-      case "/offer": {
-        offer(websocket);
-        break;
-      }
-      case "/seek": {
-        seek(websocket);
+      case "/": {
+        clients.add(websocket);
+        websocket.onmessage = (event: MessageEvent) => {
+          for (const client of clients) {
+            if (client != websocket) {
+              client.send(event.data);
+            }
+          }
+        };
         break;
       }
       default: {
@@ -21,18 +22,4 @@ export const runServer = ({ port }: { port: number }): WebSocketServer => {
     }
   });
   return server;
-};
-
-const offer = (websocket: WebSocket) => {
-  offerer = websocket;
-  websocket.onmessage = (event: MessageEvent) => {
-    seeker?.send(event.data);
-  };
-};
-
-const seek = (websocket: WebSocket) => {
-  seeker = websocket;
-  websocket.onmessage = (event: MessageEvent) => {
-    offerer?.send(event.data);
-  };
 };
