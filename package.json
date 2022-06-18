@@ -7,18 +7,28 @@
     "dist"
   ],
   "scripts": {
-    "prepack": "jest && rm -rf dist && tsc"
+    "prepack": "jest && rm -rf dist && tsc",
+    "e2e-tests": "ts-node e2e-tests.ts",
+    "ci": "yarn install && yarn jest && yarn e2e-tests"
   },
   "devDependencies": {
     "@types/jest": "^28.1.2",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "@types/ws": "^8",
+    "cypress": "^10.1.0",
     "esbuild": "^0.14.45",
     "esbuild-jest": "^0.5.0",
     "jest": "^28.1.1",
     "jest-environment-jsdom": "^28.1.1",
+    "parcel": "^2.6.1",
+    "process": "^0.11.10",
+    "ts-node": "^10.8.1",
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "ws": "^8.8.0"
   }
 }
