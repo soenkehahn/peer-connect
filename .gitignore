@@ -1,4 +1,6 @@
+/cypress/screenshots/
+/cypress/videos/
 /dist/
-/.yarn/
-/.pnp.*
 /.parcel-cache/
+/.pnp.*
+/.yarn/

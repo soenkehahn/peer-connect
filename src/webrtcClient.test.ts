@@ -12,8 +12,8 @@ describe("offer & seek", () => {
   let server: WebSocketServer;
   let signalingServer: string;
 
-  beforeEach(() => {
-    server = runServer({ port: 0 });
+  beforeEach(async () => {
+    server = await runServer({ port: 0, verbose: false });
     const port = (server.address() as AddressInfo).port;
     signalingServer = `ws://localhost:${port}`;
   });
@@ -28,12 +28,14 @@ describe("offer & seek", () => {
       offer: "a",
       seek: "b",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: true,
     });
     const b = await connect({
       signalingServer,
       offer: "b",
       seek: "a",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: false,
     });
     a.send("test message");
     expect(await b.nextReceived).toEqual("test message");
@@ -45,12 +47,14 @@ describe("offer & seek", () => {
       offer: "a",
       seek: "b",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: true,
     });
     const b = await connect({
       signalingServer,
       offer: "b",
       seek: "a",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: false,
     });
     a.send("test message 1");
     expect(await b.nextReceived).toEqual("test message 1");
@@ -64,12 +68,14 @@ describe("offer & seek", () => {
       offer: "a",
       seek: "b",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: true,
     });
     const b = await connect({
       signalingServer,
       offer: "b",
       seek: "a",
       webrtcAdapter: mockWebrtcAdapter,
+      initiator: false,
     });
     b.send("test message 1");
     expect(await a.nextReceived).toEqual("test message 1");

@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "declarationMap": true,
     "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "jsx": "react",
     "module": "commonjs",
     "moduleResolution": "node",
     "noFallthroughCasesInSwitch": true,
@@ -16,5 +17,5 @@
     "strict": true,
     "target": "es2016"
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "example/**/*"]
 }

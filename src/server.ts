@@ -1,6 +1,12 @@
-import { WebSocketServer, WebSocket, MessageEvent } from "ws";
+import { WebSocketServer, WebSocket, MessageEvent, AddressInfo } from "ws";
 
-export const runServer = ({ port }: { port: number }): WebSocketServer => {
+export const runServer = ({
+  port,
+  verbose = true,
+}: {
+  port: number;
+  verbose?: boolean;
+}): Promise<WebSocketServer> => {
   const clients: {
     [offer: string]: Array<{ seek: string; client: WebSocket }>;
   } = {};
@@ -24,7 +30,7 @@ export const runServer = ({ port }: { port: number }): WebSocketServer => {
           }
           clients[offer].push({ client: websocket, seek });
           websocket.onmessage = (event: MessageEvent) => {
-            const peers = clients[seek];
+            const peers = clients[seek] || [];
             for (const peer of peers) {
               if (peer.client != websocket) {
                 peer.client.send(event.data);
@@ -39,5 +45,13 @@ export const runServer = ({ port }: { port: number }): WebSocketServer => {
       }
     }
   });
-  return server;
+  return new Promise((resolve) => {
+    server.addListener("listening", () => {
+      if (verbose) {
+        const port = (server.address() as AddressInfo).port;
+        console.error(`listening on port ${port}...`);
+      }
+      resolve(server);
+    });
+  });
 };

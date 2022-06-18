@@ -22,8 +22,8 @@ describe("runServer", () => {
   let server: WebSocketServer;
   let url: string;
 
-  beforeEach(() => {
-    server = runServer({ port: 0 });
+  beforeEach(async () => {
+    server = await runServer({ port: 0, verbose: false });
     const port = (server.address() as AddressInfo).port;
     url = `ws://localhost:${port}`;
   });

@@ -1,9 +1,15 @@
 import { spawn, spawnSync } from "child_process";
+import { runServer } from "./src/server";
 
-const parcel = spawn("parcel", ["example/chat.html", "--no-autoinstall"], {
-  stdio: "inherit",
-});
+(async () => {
+  const signalingServer = await runServer({ port: 1233 });
 
-spawnSync("cypress", ["run"], { stdio: "inherit" });
+  const parcel = spawn("parcel", ["example/chat.html"], {
+    stdio: "inherit",
+  });
 
-parcel.kill();
+  spawnSync("cypress", ["run"], { stdio: "inherit" });
+
+  parcel.kill();
+  signalingServer.close();
+})();
