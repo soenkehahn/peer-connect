@@ -4,6 +4,7 @@ const config = {
     "^.+\\.tsx?$": "esbuild-jest",
   },
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
+  testEnvironment: "jsdom",
 };
 
 module.exports = config;
