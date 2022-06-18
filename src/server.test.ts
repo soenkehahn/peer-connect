@@ -31,4 +31,17 @@ describe("runServer", () => {
     expect(await messagePromise).toEqual("test message");
     server.close();
   });
+
+  it("relays messages from offerer to seeker", async () => {
+    const server = runServer({ port: 0 });
+    const port = (server.address() as AddressInfo).port;
+    const offeringWebsocket = await openWebsocket(
+      `ws://localhost:${port}/offer`
+    );
+    const seekingWebsocket = await openWebsocket(`ws://localhost:${port}/seek`);
+    const messagePromise = nextMessage(seekingWebsocket);
+    offeringWebsocket.send("test message");
+    expect(await messagePromise).toEqual("test message");
+    server.close();
+  });
 });

@@ -1,5 +1,7 @@
 import { WebSocketServer, WebSocket, MessageEvent } from "ws";
+
 let offerer: null | WebSocket = null;
+let seeker: null | WebSocket = null;
 
 export const runServer = ({ port }: { port: number }): WebSocketServer => {
   const server = new WebSocketServer({ port });
@@ -23,9 +25,13 @@ export const runServer = ({ port }: { port: number }): WebSocketServer => {
 
 const offer = (websocket: WebSocket) => {
   offerer = websocket;
+  websocket.onmessage = (event: MessageEvent) => {
+    seeker?.send(event.data);
+  };
 };
 
 const seek = (websocket: WebSocket) => {
+  seeker = websocket;
   websocket.onmessage = (event: MessageEvent) => {
     offerer?.send(event.data);
   };
