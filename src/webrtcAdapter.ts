@@ -1,4 +1,5 @@
 import { Peer } from "./signalingClient";
+import { rtcDataChannelToPeer } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
@@ -18,7 +19,7 @@ export const webrtcAdapter: WebrtcAdapter = {
         };
         const channel = connection.createDataChannel("my channel");
         channel.addEventListener("open", () => {
-          resolve(channelToPeer(channel));
+          resolve(rtcDataChannelToPeer(channel));
         });
         handleSignallingMessages(connection, signalingPeer);
       } else {
@@ -31,7 +32,7 @@ export const webrtcAdapter: WebrtcAdapter = {
         connection.ondatachannel = (event) => {
           const channel = event.channel;
           channel.onopen = () => {
-            resolve(channelToPeer(channel));
+            resolve(rtcDataChannelToPeer(channel));
           };
         };
         handleSignallingMessages(connection, signalingPeer);
@@ -47,7 +48,7 @@ function handleSignallingMessages(
   void (async () => {
     try {
       while (true) {
-        const message = JSON.parse(await signalingPeer.nextReceived);
+        const message = JSON.parse(await signalingPeer.next());
         if (message.desc) {
           const desc = message.desc;
           if (desc.type === "offer") {
@@ -70,22 +71,3 @@ function handleSignallingMessages(
     }
   })();
 }
-
-const channelToPeer = (channel: RTCDataChannel): Peer => {
-  const peer = {
-    send: (message: string) => {
-      channel.send(message);
-    },
-    nextReceived: new Promise<string>(() => {}),
-  };
-  const makeNextReceived = (): Promise<string> => {
-    return new Promise<string>((resolve) => {
-      channel.onmessage = (event: MessageEvent) => {
-        peer.nextReceived = makeNextReceived();
-        resolve(event.data);
-      };
-    });
-  };
-  peer.nextReceived = makeNextReceived();
-  return peer;
-};

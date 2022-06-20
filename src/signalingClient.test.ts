@@ -1,6 +1,8 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { connect } from "./signalingClient";
+import { connect, Peer } from "./signalingClient";
+
+jest.setTimeout(1000);
 
 describe("offer & seek", () => {
   let server: WebSocketServer;
@@ -16,28 +18,31 @@ describe("offer & seek", () => {
     server.close();
   });
 
+  let a: Peer;
+  let b: Peer;
+  beforeEach(async () => {
+    [a, b] = await Promise.all([
+      connect({ url, offer: "a", seek: "b" }),
+      connect({ url, offer: "b", seek: "a" }),
+    ]);
+  });
+
   it("finds a peer", async () => {
-    const a = await connect({ url, offer: "a", seek: "b" });
-    const b = await connect({ url, offer: "b", seek: "a" });
     a.send("test message");
-    expect(await b.nextReceived).toEqual("test message");
+    expect(await b.next()).toEqual("test message");
   });
 
   it("allows to send multiple messages to the peer", async () => {
-    const a = await connect({ url, offer: "a", seek: "b" });
-    const b = await connect({ url, offer: "b", seek: "a" });
     a.send("test message 1");
-    expect(await b.nextReceived).toEqual("test message 1");
+    expect(await b.next()).toEqual("test message 1");
     a.send("test message 2");
-    expect(await b.nextReceived).toEqual("test message 2");
+    expect(await b.next()).toEqual("test message 2");
   });
 
   it("allows to send multiple messages the other direction", async () => {
-    const a = await connect({ url, offer: "a", seek: "b" });
-    const b = await connect({ url, offer: "b", seek: "a" });
     b.send("test message 1");
-    expect(await a.nextReceived).toEqual("test message 1");
+    expect(await a.next()).toEqual("test message 1");
     b.send("test message 2");
-    expect(await a.nextReceived).toEqual("test message 2");
+    expect(await a.next()).toEqual("test message 2");
   });
 });

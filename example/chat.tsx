@@ -57,8 +57,7 @@ const Chat = (props: {
       useEffect(() => {
         (async () => {
           while (true) {
-            const message = await peer.nextReceived;
-            setReceived(message);
+            setReceived(await peer.next());
           }
         })();
       }, [setReceived]);
