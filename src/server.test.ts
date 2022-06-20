@@ -1,22 +1,13 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
+import { wait } from "./utils";
+import { Channel, websocketChannel } from "./utils/channel";
 
-const openWebsocket = (url: string): Promise<WebSocket> => {
-  const websocket = new WebSocket(url);
-  return new Promise<WebSocket>((resolve) => {
-    websocket.onopen = () => {
-      resolve(websocket);
-    };
-  });
+const skipConfirmation = async (client: Channel): Promise<void> => {
+  expect(await client.next()).toEqual(JSON.stringify({ success: true }));
 };
 
-const nextReceived = (websocket: WebSocket): Promise<string> => {
-  return new Promise<string>((resolve) => {
-    websocket.onmessage = (event) => {
-      resolve(event.data);
-    };
-  });
-};
+jest.setTimeout(1000);
 
 describe("runServer", () => {
   let server: WebSocketServer;
@@ -32,56 +23,82 @@ describe("runServer", () => {
     server.close();
   });
 
-  it("relays messages from a to b", async () => {
-    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
-    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
-    const received = nextReceived(b);
-    a.send("test message");
-    expect(await received).toEqual("test message");
-  });
+  describe("when two peers connect", () => {
+    let a: Channel;
+    let b: Channel;
+    beforeEach(async () => {
+      a = await websocketChannel(`${url}/?offer=a&seek=a`);
+      b = await websocketChannel(`${url}/?offer=a&seek=a`);
+      await skipConfirmation(a);
+      await skipConfirmation(b);
+    });
 
-  it("relays messages from b to a", async () => {
-    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
-    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
-    const received = nextReceived(a);
-    b.send("test message");
-    expect(await received).toEqual("test message");
-  });
+    it("relays messages from a to b", async () => {
+      a.send("test message");
+      expect(await b.next()).toEqual("test message");
+    });
 
-  it("relays multiple messages in both directions", async () => {
-    const a = await openWebsocket(`${url}/?offer=a&seek=a`);
-    const b = await openWebsocket(`${url}/?offer=a&seek=a`);
+    it("relays messages from b to a", async () => {
+      b.send("test message");
+      expect(await a.next()).toEqual("test message");
+    });
 
-    let receivedByA = nextReceived(a);
-    b.send("from b 1");
-    expect(await receivedByA).toEqual("from b 1");
+    it("relays multiple messages in both directions", async () => {
+      b.send("from b 1");
+      expect(await a.next()).toEqual("from b 1");
 
-    receivedByA = nextReceived(a);
-    b.send("from b 2");
-    expect(await receivedByA).toEqual("from b 2");
+      b.send("from b 2");
+      expect(await a.next()).toEqual("from b 2");
 
-    let receivedByB = nextReceived(b);
-    a.send("from a 1");
-    expect(await receivedByB).toEqual("from a 1");
+      a.send("from a 1");
+      expect(await b.next()).toEqual("from a 1");
 
-    receivedByB = nextReceived(b);
-    a.send("from a 2");
-    expect(await receivedByB).toEqual("from a 2");
+      a.send("from a 2");
+      expect(await b.next()).toEqual("from a 2");
+    });
   });
 
   it("allows to offer and seek things by string", async () => {
-    const a = await openWebsocket(`${url}?offer=a&seek=b`);
-    const b = await openWebsocket(`${url}?offer=b&seek=a`);
+    const a = await websocketChannel(`${url}?offer=a&seek=b`);
+    const b = await websocketChannel(`${url}?offer=b&seek=a`);
+    await skipConfirmation(a);
+    await skipConfirmation(b);
 
-    const x = await openWebsocket(`${url}?offer=x&seek=y`);
-    const y = await openWebsocket(`${url}?offer=y&seek=x`);
+    const x = await websocketChannel(`${url}?offer=x&seek=y`);
+    const y = await websocketChannel(`${url}?offer=y&seek=x`);
+    await skipConfirmation(x);
+    await skipConfirmation(y);
 
-    const receivedByB = nextReceived(b);
     a.send("from a");
-    expect(await receivedByB).toEqual("from a");
+    expect(await b.next()).toEqual("from a");
 
-    const receivedByY = nextReceived(y);
     x.send("from x");
-    expect(await receivedByY).toEqual("from x");
+    expect(await y.next()).toEqual("from x");
+  });
+
+  it("sends an error if messages get sent before the confirmation is received", async () => {
+    const a = await websocketChannel(`${url}?offer=a&seek=b`);
+    a.send("foo");
+    expect(await a.next()).toEqual(
+      JSON.stringify({
+        error: "not connected to a peer yet, please await confirmation message",
+      })
+    );
+  });
+
+  it("doesn't connect if b's offer doesn't match", async () => {
+    const a = await websocketChannel(`${url}?offer=a&seek=b`);
+    const b = await websocketChannel(`${url}?offer=foo&seek=a`);
+    expect(await Promise.race([wait(200), a.next(), b.next()])).toEqual(
+      undefined
+    );
+  });
+
+  it("doesn't connect if a's offer doesn't match", async () => {
+    const a = await websocketChannel(`${url}?offer=foo&seek=b`);
+    const b = await websocketChannel(`${url}?offer=b&seek=a`);
+    expect(await Promise.race([wait(200), a.next(), b.next()])).toEqual(
+      undefined
+    );
   });
 });

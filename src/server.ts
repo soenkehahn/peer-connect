@@ -1,4 +1,12 @@
-import { WebSocketServer, WebSocket, MessageEvent, AddressInfo } from "ws";
+import { WebSocketServer, WebSocket, AddressInfo } from "ws";
+import {
+  newQueuedMap,
+  popMatch,
+  pushMatch,
+  QueuedMap,
+} from "./utils/queued-map";
+
+type PeerDescription = { offer: string; seek: string };
 
 export const runServer = ({
   port,
@@ -7,36 +15,14 @@ export const runServer = ({
   port: number;
   verbose?: boolean;
 }): Promise<WebSocketServer> => {
-  const clients: {
-    [offer: string]: Array<{ seek: string; client: WebSocket }>;
-  } = {};
+  const waiting: QueuedMap<PeerDescription, WebSocket> = newQueuedMap();
   const server = new WebSocketServer({ port });
-  server.addListener("connection", (websocket: WebSocket, request) => {
+  server.addListener("connection", (newPeer: WebSocket, request) => {
     if (request.url) {
       const url = new URL(request.url, `http://${request.headers.host}`);
       switch (url.pathname) {
         case "/": {
-          const offer = url.searchParams.get("offer");
-          const seek = url.searchParams.get("seek");
-          if (!offer) {
-            throw new Error("offer not given");
-          }
-          if (!seek) {
-            throw new Error("seek not given");
-          }
-
-          if (!clients[offer]) {
-            clients[offer] = [];
-          }
-          clients[offer].push({ client: websocket, seek });
-          websocket.onmessage = (event: MessageEvent) => {
-            const peers = clients[seek] || [];
-            for (const peer of peers) {
-              if (peer.client != websocket) {
-                peer.client.send(event.data);
-              }
-            }
-          };
+          handleNewPeer(waiting, url, newPeer);
           break;
         }
         default: {
@@ -54,4 +40,52 @@ export const runServer = ({
       resolve(server);
     });
   });
+};
+
+const handleNewPeer = (
+  waiting: QueuedMap<PeerDescription, WebSocket>,
+  url: URL,
+  newPeer: WebSocket
+) => {
+  const newPeerDescription = getParams(url);
+  const match = popMatch(waiting, {
+    offer: newPeerDescription.seek,
+    seek: newPeerDescription.offer,
+  });
+  if (match) {
+    connectPeers(newPeer, match);
+  } else {
+    pushMatch(waiting, newPeerDescription, newPeer);
+    newPeer.onmessage = () => {
+      newPeer.send(
+        JSON.stringify({
+          error:
+            "not connected to a peer yet, please await confirmation message",
+        })
+      );
+    };
+  }
+};
+
+const getParams = (url: URL): { offer: string; seek: string } => {
+  const offer = url.searchParams.get("offer");
+  const seek = url.searchParams.get("seek");
+  if (!offer) {
+    throw new Error("offer not given");
+  }
+  if (!seek) {
+    throw new Error("seek not given");
+  }
+  return { offer, seek };
+};
+
+const connectPeers = (a: WebSocket, b: WebSocket) => {
+  a.send(JSON.stringify({ success: true }));
+  b.send(JSON.stringify({ success: true }));
+  a.onmessage = (event) => {
+    b.send(event.data);
+  };
+  b.onmessage = (event) => {
+    a.send(event.data);
+  };
 };
