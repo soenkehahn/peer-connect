@@ -1,11 +1,6 @@
 import * as uuid from "uuid";
-import {
-  ComponentType,
-  createElement,
-  ReactElement,
-  useEffect,
-  useState,
-} from "react";
+import { withLoader } from "./loader";
+import { ReactElement, useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { Channel, connect } from "../src/webrtcClient";
 import { webrtcAdapter } from "../src/webrtcAdapter";
@@ -64,20 +59,6 @@ const HelloWorldPeer = (props: {
       );
     }
   );
-
-function withLoader<T>(
-  load: () => Promise<T>,
-  makeComponent: (loaded: T) => ComponentType
-): ReactElement {
-  const [inner, setInner] = useState<ReactElement>(<div>loading...</div>);
-  useEffect(() => {
-    (async () => {
-      const t = await load();
-      setInner(createElement(makeComponent(t)));
-    })();
-  }, []);
-  return inner;
-}
 
 const root = document.getElementById("root");
 if (root) {
