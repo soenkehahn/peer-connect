@@ -1,8 +1,9 @@
-import { Peer, connect as signalingConnect } from "./signalingClient";
-export { Peer } from "./signalingClient";
+import { connect as signalingConnect, Colored } from "./signalingClient";
+import { Channel } from "./utils/channel";
+export { Channel } from "./utils/channel";
 
 export type WebrtcAdapter = {
-  promote: (peer: Peer, initiator: boolean) => Promise<Peer>;
+  promote: (channel: Channel & Colored, initiator: boolean) => Promise<Channel>;
 };
 
 export const connect = async (args: {
@@ -11,7 +12,7 @@ export const connect = async (args: {
   seek: string;
   webrtcAdapter: WebrtcAdapter;
   initiator: boolean;
-}): Promise<Peer> => {
+}): Promise<Channel> => {
   return await args.webrtcAdapter.promote(
     await signalingConnect({
       url: args.signalingServer,

@@ -4,7 +4,7 @@ import { wait } from "./utils";
 import { Channel, websocketChannel } from "./utils/channel";
 
 const skipConfirmation = async (client: Channel): Promise<void> => {
-  expect(await client.next()).toEqual(JSON.stringify({ success: true }));
+  expect(JSON.parse(await client.next())).toMatchObject({ success: true });
 };
 
 jest.setTimeout(1000);

@@ -80,8 +80,8 @@ const getParams = (url: URL): { offer: string; seek: string } => {
 };
 
 const connectPeers = (a: WebSocket, b: WebSocket) => {
-  a.send(JSON.stringify({ success: true }));
-  b.send(JSON.stringify({ success: true }));
+  a.send(JSON.stringify({ success: true, color: "blue" }));
+  b.send(JSON.stringify({ success: true, color: "green" }));
   a.onmessage = (event) => {
     b.send(event.data);
   };

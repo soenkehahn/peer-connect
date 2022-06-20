@@ -1,6 +1,6 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { connect, Peer } from "./signalingClient";
+import { Channel, Colored, connect } from "./signalingClient";
 
 jest.setTimeout(1000);
 
@@ -18,8 +18,8 @@ describe("offer & seek", () => {
     server.close();
   });
 
-  let a: Peer;
-  let b: Peer;
+  let a: Channel & Colored;
+  let b: Channel & Colored;
   beforeEach(async () => {
     [a, b] = await Promise.all([
       connect({ url, offer: "a", seek: "b" }),
@@ -44,5 +44,9 @@ describe("offer & seek", () => {
     expect(await a.next()).toEqual("test message 1");
     b.send("test message 2");
     expect(await a.next()).toEqual("test message 2");
+  });
+
+  it("marks one peer as blue and the other as green", async () => {
+    expect(new Set([a.color, b.color])).toEqual(new Set(["blue", "green"]));
   });
 });

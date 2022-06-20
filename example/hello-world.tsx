@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import * as ReactDOM from "react-dom/client";
-import { connect, Peer } from "../src/webrtcClient";
+import { Channel, connect } from "../src/webrtcClient";
 import { webrtcAdapter } from "../src/webrtcAdapter";
 import React from "react";
 
@@ -42,7 +42,7 @@ const HelloWorldPeer = (props: {
 }): ReactElement =>
   withLoader(
     () => connect({ ...props, webrtcAdapter }),
-    (peer: Peer) => () => {
+    (peer: Channel) => () => {
       useEffect(() => {
         (async () => {
           if (props.initiator) {

@@ -1,19 +1,22 @@
-import { Peer } from "./signalingClient";
-import { rtcDataChannelToPeer } from "./utils/channel";
+import { Colored } from "./signalingClient";
+import { Channel, rtcDataChannelToPeer } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (signalingPeer: Peer, initiator: boolean): Promise<Peer> => {
+  promote: async (
+    signalingChannel: Channel & Colored,
+    initiator: boolean
+  ): Promise<Channel> => {
     const connection: RTCPeerConnection = new RTCPeerConnection({});
-    return new Promise<Peer>((resolve) => {
+    return new Promise<Channel>((resolve) => {
       if (initiator) {
         connection.onicecandidate = ({ candidate }) => {
-          signalingPeer.send(JSON.stringify({ candidate }));
+          signalingChannel.send(JSON.stringify({ candidate }));
         };
         connection.onnegotiationneeded = async () => {
           const offer = await connection.createOffer();
           await connection.setLocalDescription(offer);
-          signalingPeer.send(
+          signalingChannel.send(
             JSON.stringify({ desc: connection.localDescription })
           );
         };
@@ -21,13 +24,13 @@ export const webrtcAdapter: WebrtcAdapter = {
         channel.addEventListener("open", () => {
           resolve(rtcDataChannelToPeer(channel));
         });
-        handleSignallingMessages(connection, signalingPeer);
+        handleSignallingMessages(connection, signalingChannel);
       } else {
         connection.onnegotiationneeded = () => {
           throw "negotiation needed";
         };
         connection.onicecandidate = ({ candidate }) => {
-          signalingPeer.send(JSON.stringify({ candidate }));
+          signalingChannel.send(JSON.stringify({ candidate }));
         };
         connection.ondatachannel = (event) => {
           const channel = event.channel;
@@ -35,7 +38,7 @@ export const webrtcAdapter: WebrtcAdapter = {
             resolve(rtcDataChannelToPeer(channel));
           };
         };
-        handleSignallingMessages(connection, signalingPeer);
+        handleSignallingMessages(connection, signalingChannel);
       }
     });
   },
@@ -43,19 +46,19 @@ export const webrtcAdapter: WebrtcAdapter = {
 
 function handleSignallingMessages(
   connection: RTCPeerConnection,
-  signalingPeer: Peer
+  signalingChannel: Channel
 ): void {
   void (async () => {
     try {
       while (true) {
-        const message = JSON.parse(await signalingPeer.next());
+        const message = JSON.parse(await signalingChannel.next());
         if (message.desc) {
           const desc = message.desc;
           if (desc.type === "offer") {
             await connection.setRemoteDescription(desc);
             const localDescription = await connection.createAnswer();
             await connection.setLocalDescription(localDescription);
-            signalingPeer.send(JSON.stringify({ desc: localDescription }));
+            signalingChannel.send(JSON.stringify({ desc: localDescription }));
           } else if (desc.type === "answer") {
             await connection.setRemoteDescription(desc);
           } else {
