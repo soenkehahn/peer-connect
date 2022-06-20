@@ -4,7 +4,7 @@ import { runServer } from "./src/server";
 (async () => {
   await runServer({ port: 1233 });
 
-  spawn("parcel", ["example/chat.html"], {
+  spawn("parcel", ["example/hello-world.html"], {
     stdio: "inherit",
   });
 })();

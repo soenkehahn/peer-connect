@@ -9,7 +9,7 @@
   "scripts": {
     "prepack": "jest && rm -rf dist && tsc",
     "e2e": "ts-node ./e2e-tests.ts",
-    "serve-chat": "ts-node ./run-chat-server.ts",
+    "serve-example": "ts-node ./serve-example.ts",
     "ci": "yarn install && yarn jest && yarn e2e"
   },
   "devDependencies": {

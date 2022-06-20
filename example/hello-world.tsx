@@ -14,7 +14,7 @@ import React from "react";
 const App = ({ a, b }: { a: string; b: string }) => {
   return (
     <>
-      <Chat
+      <HelloWorldPeer
         name="a"
         signalingServer={"ws://localhost:1233"}
         offer={a}
@@ -22,7 +22,7 @@ const App = ({ a, b }: { a: string; b: string }) => {
         initiator={true}
       />
       <br />
-      <Chat
+      <HelloWorldPeer
         name="b"
         signalingServer={"ws://localhost:1233"}
         offer={b}
@@ -33,7 +33,7 @@ const App = ({ a, b }: { a: string; b: string }) => {
   );
 };
 
-const Chat = (props: {
+const HelloWorldPeer = (props: {
   signalingServer: string;
   name: string;
   offer: string;
@@ -64,7 +64,7 @@ const Chat = (props: {
 
       return (
         <div>
-          chat {props.name}:
+          Peer: {props.name}
           <br />
           {received}
         </div>
