@@ -1,13 +1,13 @@
 import { Channel, websocketChannel } from "./utils/channel";
 export { Channel } from "./utils/channel";
 
-export type Colored = { color: "blue" | "green" };
+export type HasColor = { color: "blue" | "green" };
 
 export const connect = async (args: {
   url: string;
   offer: string;
   seek: string;
-}): Promise<Channel & Colored> => {
+}): Promise<Channel & HasColor> => {
   let channel = await websocketChannel(
     `${args.url}/?offer=${args.offer}&seek=${args.seek}`
   );
@@ -18,7 +18,7 @@ export const connect = async (args: {
   return { ...channel, color: confirmation.color };
 };
 
-type Confirmation = { success: boolean } & Colored;
+type Confirmation = { success: boolean } & HasColor;
 
 const parseConfirmation = (json: string): Confirmation => {
   const error = (message: string) =>
@@ -51,6 +51,6 @@ const hasSuccess = (parsed: {}): parsed is { success: boolean } =>
   (parsed as Confirmation).success !== undefined &&
   typeof (parsed as Confirmation).success === "boolean";
 
-const hasColor = (parsed: {}): parsed is Colored =>
+const hasColor = (parsed: {}): parsed is HasColor =>
   (parsed as Confirmation).color === "blue" ||
   (parsed as Confirmation).color === "green";

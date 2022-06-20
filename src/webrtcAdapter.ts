@@ -1,15 +1,12 @@
-import { Colored } from "./signalingClient";
+import { HasColor } from "./signalingClient";
 import { Channel, rtcDataChannelToPeer } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (
-    signalingChannel: Channel & Colored,
-    initiator: boolean
-  ): Promise<Channel> => {
+  promote: async (signalingChannel: Channel & HasColor): Promise<Channel> => {
     const connection: RTCPeerConnection = new RTCPeerConnection({});
     return new Promise<Channel>((resolve) => {
-      if (initiator) {
+      if (signalingChannel.color === "blue") {
         connection.onicecandidate = ({ candidate }) => {
           signalingChannel.send(JSON.stringify({ candidate }));
         };

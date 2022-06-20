@@ -1,9 +1,9 @@
-import { connect as signalingConnect, Colored } from "./signalingClient";
+import { connect as signalingConnect, HasColor } from "./signalingClient";
 import { Channel } from "./utils/channel";
 export { Channel } from "./utils/channel";
 
 export type WebrtcAdapter = {
-  promote: (channel: Channel & Colored, initiator: boolean) => Promise<Channel>;
+  promote: (channel: Channel & HasColor) => Promise<Channel>;
 };
 
 export const connect = async (args: {
@@ -11,14 +11,11 @@ export const connect = async (args: {
   offer: string;
   seek: string;
   webrtcAdapter: WebrtcAdapter;
-  initiator: boolean;
 }): Promise<Channel> => {
-  return await args.webrtcAdapter.promote(
-    await signalingConnect({
-      url: args.signalingServer,
-      offer: args.offer,
-      seek: args.seek,
-    }),
-    args.initiator
-  );
+  const signalingChannel = await signalingConnect({
+    url: args.signalingServer,
+    offer: args.offer,
+    seek: args.seek,
+  });
+  return await args.webrtcAdapter.promote(signalingChannel);
 };

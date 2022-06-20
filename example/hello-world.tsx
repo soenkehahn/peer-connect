@@ -19,7 +19,6 @@ const App = ({ a, b }: { a: string; b: string }) => {
         signalingServer={"ws://localhost:1233"}
         offer={a}
         seek={b}
-        initiator={true}
       />
       <br />
       <HelloWorldPeer
@@ -27,7 +26,6 @@ const App = ({ a, b }: { a: string; b: string }) => {
         signalingServer={"ws://localhost:1233"}
         offer={b}
         seek={a}
-        initiator={false}
       />
     </>
   );
@@ -38,18 +36,13 @@ const HelloWorldPeer = (props: {
   name: string;
   offer: string;
   seek: string;
-  initiator: boolean;
 }): ReactElement =>
   withLoader(
     () => connect({ ...props, webrtcAdapter }),
     (peer: Channel) => () => {
       useEffect(() => {
         (async () => {
-          if (props.initiator) {
-            peer.send("ping from initiator");
-          } else {
-            peer.send("ping from joiner");
-          }
+          peer.send(`ping from ${props.name}`);
         })();
       }, []);
 
