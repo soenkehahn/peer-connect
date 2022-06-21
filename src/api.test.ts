@@ -41,4 +41,12 @@ describe("handleMessages", () => {
     // @ts-expect-error
     handleMessages(MyApi, (input: string): string => input);
   });
+
+  test("apis can be serialized", () => {
+    const MyApi: { input: "string"; output: "number" } = {
+      input: "string",
+      output: "number",
+    };
+    expect(JSON.parse(JSON.stringify(MyApi))).toEqual(MyApi);
+  });
 });
