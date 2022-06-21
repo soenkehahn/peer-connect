@@ -8,17 +8,17 @@ export type ToType<T extends Type> = T extends "string"
   ? number
   : null;
 
-const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
+export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
   const value: unknown = JSON.parse(json);
   if (typ === "string") {
     if (typeof value !== "string") {
-      throw "not";
+      throw new Error(`expected: string, got: ${JSON.stringify(value)}`);
     }
     const result: string = value;
     return result as any;
   } else if (typ === "number") {
     if (typeof value !== "number") {
-      throw "not";
+      throw `expected: number, got: ${JSON.stringify(value)}`;
     }
     const result: number = value;
     return result as any;

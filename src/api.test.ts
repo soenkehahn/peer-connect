@@ -1,4 +1,4 @@
-import { Api, handleMessages } from "./api";
+import { Api, handleMessages, parseJSON } from "./api";
 
 describe("handleMessages", () => {
   it("allows to specify an api with a single function", () => {
@@ -89,5 +89,37 @@ describe("handleMessages", () => {
     };
     const api: Api = MyApi;
     expect(JSON.parse(JSON.stringify(api))).toEqual(MyApi);
+  });
+});
+
+describe("parseJSON", () => {
+  it("throws errors for invalid json", () => {
+    expect(() => parseJSON("string", "{")).toThrow(
+      "Unexpected end of JSON input"
+    );
+  });
+
+  describe("strings", () => {
+    test("valid strings", () => {
+      expect(parseJSON("string", '"foo"')).toEqual("foo");
+    });
+
+    test("invalid strings", () => {
+      expect(() => parseJSON("string", "42")).toThrow(
+        "expected: string, got: 42"
+      );
+    });
+  });
+
+  describe("numbers", () => {
+    it("valid numbers", () => {
+      expect(parseJSON("number", "42")).toEqual(42);
+    });
+
+    test("invalid numbers", () => {
+      expect(() => parseJSON("number", '"foo"')).toThrow(
+        'expected: number, got: "foo"'
+      );
+    });
   });
 });
