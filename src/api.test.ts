@@ -1,21 +1,44 @@
-import { Api, runServer } from "./api";
+import { Api, handleMessages } from "./api";
 
-describe("", () => {
+describe("handleMessages", () => {
   it("allows to specify an api with a single function", () => {
-    const MyApi: Api = "string";
+    const MyApi: { input: "string"; output: null } = {
+      input: "string",
+      output: null,
+    };
     const calls: Array<string> = [];
-    const channel = runServer(MyApi, (input: string) => {
+    const handleMessage = handleMessages(MyApi, (input: string): null => {
       calls.push(input);
+      return null;
     });
-    channel.send('"foo"');
+    handleMessage('"foo"');
     expect(calls).toEqual(["foo"]);
   });
 
   it("produces type errors if the input value doesn't match", () => {
-    const MyApi: Api = "string";
+    const MyApi: Api = { input: "string", output: null };
     // @ts-expect-error
-    runServer(MyApi, (input: number) => {});
+    handleMessages(MyApi, (input: number) => {});
   });
 
-  it.todo("allows to specify return values");
+  it("allows to specify return values", () => {
+    const MyApi: { input: "string"; output: "number" } = {
+      input: "string",
+      output: "number",
+    };
+    const handleMessage = handleMessages(
+      MyApi,
+      (input: string): number => input.length
+    );
+    expect(JSON.parse(handleMessage('"foo"'))).toEqual(3);
+  });
+
+  it("produces type errors if the output value doesn't match", () => {
+    const MyApi: { input: "string"; output: "number" } = {
+      input: "string",
+      output: "number",
+    };
+    // @ts-expect-error
+    handleMessages(MyApi, (input: string): string => input);
+  });
 });
