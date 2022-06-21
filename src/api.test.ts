@@ -100,6 +100,37 @@ describe("handleMessages", () => {
     const api: Api = MyApi;
     expect(JSON.parse(JSON.stringify(api))).toEqual(MyApi);
   });
+
+  test("object inputs", async () => {
+    const MyApi: {
+      a: { input: { s: "string"; n: "number" }; output: "string" };
+    } = {
+      a: { input: { s: "string", n: "number" }, output: "string" },
+    };
+    const handleMessage = handleMessages(MyApi, {
+      a: (input: { s: string; n: number }): string => input.s.repeat(input.n),
+    });
+    expect(await handleMessage("a", '{"s": "foo", "n": 3}')).toEqual(
+      '"foofoofoo"'
+    );
+  });
+
+  test("object outputs", async () => {
+    const MyApi: {
+      a: { input: "string"; output: { length: "number"; doubled: "number" } };
+    } = {
+      a: { input: "string", output: { length: "number", doubled: "number" } },
+    };
+    const handleMessage = handleMessages(MyApi, {
+      a: (input: string): { length: number; doubled: number } => ({
+        length: input.length,
+        doubled: input.length * 2,
+      }),
+    });
+    expect(await handleMessage("a", '"foo"')).toEqual(
+      '{"length":3,"doubled":6}'
+    );
+  });
 });
 
 describe("parseJSON", () => {
@@ -122,7 +153,7 @@ describe("parseJSON", () => {
   });
 
   describe("numbers", () => {
-    it("valid numbers", () => {
+    test("valid numbers", () => {
       expect(parseJSON("number", "42")).toEqual(42);
     });
 
@@ -134,13 +165,52 @@ describe("parseJSON", () => {
   });
 
   describe("null", () => {
-    it("valid null", () => {
+    test("valid null", () => {
       expect(parseJSON(null, "null")).toEqual(null);
     });
 
     test("invalid null", () => {
       expect(() => parseJSON(null, '"foo"')).toThrow(
         'expected: null, got: "foo"'
+      );
+    });
+  });
+
+  describe("objects", () => {
+    test("valid objects", () => {
+      expect(parseJSON({ foo: "number" }, '{"foo": 42}')).toEqual({ foo: 42 });
+    });
+
+    test("invalid object", () => {
+      expect(() => parseJSON({ foo: "number" }, '"foo"')).toThrow(
+        'expected: { foo: number }, got: "foo"'
+      );
+    });
+
+    it("ignores additional fields", () => {
+      expect(parseJSON({}, '{"foo": 42}')).toEqual({ foo: 42 });
+    });
+
+    test("empty object", () => {
+      expect(parseJSON({}, "{}")).toEqual({});
+      expect(() => parseJSON({}, '"foo"')).toThrow('expected: {}, got: "foo"');
+    });
+
+    it("nested objects", () => {
+      expect(
+        parseJSON({ foo: { bar: "number" } }, '{"foo": {"bar": 42}}')
+      ).toEqual({ foo: { bar: 42 } });
+    });
+
+    test("missing fields", () => {
+      expect(() => parseJSON({ foo: "number" }, "{}")).toThrow(
+        'missing field "foo" in: {}'
+      );
+    });
+
+    test("invalid children", () => {
+      expect(() => parseJSON({ foo: "number" }, '{"foo": "bar"}')).toThrow(
+        'expected: { foo: number }, got: {"foo":"bar"}'
       );
     });
   });

@@ -7,6 +7,7 @@ module.exports = {
     "ts-jest": {
       tsconfig: {
         noUnusedParameters: false,
+        noUnusedLocals: false,
       },
     },
   },
