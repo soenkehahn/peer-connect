@@ -22,8 +22,20 @@ export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
     }
     const result: number = value;
     return result as any;
+  } else if (typ === null) {
+    if (value !== null) {
+      throw `expected: null, got: ${JSON.stringify(value)}`;
+    }
+    const result: null = value;
+    return result as any;
+  } else {
+    checkNever(typ);
+    throw "impossible";
   }
-  throw "nyi parse";
+};
+
+const checkNever = (input: never) => {
+  throw new Error("not never: " + input);
 };
 
 /// Apis
@@ -31,7 +43,7 @@ export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
 export type Api = { [name: string]: Endpoint };
 
 export type ToServer<T extends Api> = {
-  [Field in keyof T]: ToFunction<T[Field]>;
+  [Field in keyof T]: EndpointToFunction<T[Field]>;
 };
 
 export type Endpoint = {
@@ -39,18 +51,16 @@ export type Endpoint = {
   output: Type;
 };
 
-export type ToFunction<T extends Endpoint> = (
+export type EndpointToFunction<T extends Endpoint> = (
   input: ToType<T["input"]>
-) => ToType<T["output"]>;
+) => ToType<T["output"]> | Promise<ToType<T["output"]>>;
 
 export const handleMessages =
   <ServerApi extends Api>(
     api: ServerApi,
     server: ToServer<ServerApi>
-  ): ((endpoint: string, input: string) => string) =>
-  (endpoint: string, input: string): string => {
-    const functionn = api[endpoint];
-    const inputType = functionn.input;
-    const parsed = parseJSON(inputType, input);
-    return JSON.stringify(server[endpoint](parsed as any));
+  ): ((endpoint: string, input: string) => Promise<string>) =>
+  async (endpoint: string, input: string): Promise<string> => {
+    const parsed = parseJSON(api[endpoint].input, input);
+    return JSON.stringify(await server[endpoint](parsed as any));
   };

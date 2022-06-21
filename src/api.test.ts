@@ -1,7 +1,7 @@
 import { Api, handleMessages, parseJSON } from "./api";
 
 describe("handleMessages", () => {
-  it("allows to specify an api with a single function", () => {
+  it("allows to specify an api with a single function", async () => {
     const MyApi: { endpoint: { input: "string"; output: null } } = {
       endpoint: {
         input: "string",
@@ -15,7 +15,7 @@ describe("handleMessages", () => {
         return null;
       },
     });
-    handleMessage("endpoint", '"foo"');
+    await handleMessage("endpoint", '"foo"');
     expect(calls).toEqual(["foo"]);
   });
 
@@ -27,7 +27,7 @@ describe("handleMessages", () => {
     handleMessages(MyApi, { endpoint: (input: number): null => null });
   });
 
-  it("allows to specify return values", () => {
+  it("allows to specify return values", async () => {
     const MyApi: { endpoint: { input: "string"; output: "number" } } = {
       endpoint: {
         input: "string",
@@ -37,7 +37,7 @@ describe("handleMessages", () => {
     const handleMessage = handleMessages(MyApi, {
       endpoint: (input: string): number => input.length,
     });
-    expect(JSON.parse(handleMessage("endpoint", '"foo"'))).toEqual(3);
+    expect(JSON.parse(await handleMessage("endpoint", '"foo"'))).toEqual(3);
   });
 
   it("produces type errors if the output value doesn't match", () => {
@@ -62,7 +62,7 @@ describe("handleMessages", () => {
     handleMessages(MyApi, () => {});
   });
 
-  it("allows multiple endpoints", () => {
+  it("allows multiple endpoints", async () => {
     const MyApi: {
       a: { input: "string"; output: "number" };
       b: { input: "number"; output: "string" };
@@ -74,11 +74,21 @@ describe("handleMessages", () => {
       a: (input: string): number => input.length,
       b: (n: number): string => "a".repeat(n),
     });
-    expect(handleMessage("a", '"foo"')).toEqual("3");
-    expect(handleMessage("b", "3")).toEqual('"aaa"');
+    expect(await handleMessage("a", '"foo"')).toEqual("3");
+    expect(await handleMessage("b", "3")).toEqual('"aaa"');
   });
 
-  // it.todo("works for async functions");
+  it("works for async functions", async () => {
+    const MyApi: {
+      a: { input: "string"; output: "number" };
+    } = {
+      a: { input: "string", output: "number" },
+    };
+    const handleMessage = handleMessages(MyApi, {
+      a: (input: string): Promise<number> => Promise.resolve(input.length),
+    });
+    expect(await handleMessage("a", '"foo"')).toEqual("3");
+  });
 
   test("apis can be serialized", () => {
     const MyApi: { endpoint: { input: "string"; output: "number" } } = {
@@ -119,6 +129,18 @@ describe("parseJSON", () => {
     test("invalid numbers", () => {
       expect(() => parseJSON("number", '"foo"')).toThrow(
         'expected: number, got: "foo"'
+      );
+    });
+  });
+
+  describe("null", () => {
+    it("valid null", () => {
+      expect(parseJSON(null, "null")).toEqual(null);
+    });
+
+    test("invalid null", () => {
+      expect(() => parseJSON(null, '"foo"')).toThrow(
+        'expected: null, got: "foo"'
       );
     });
   });
