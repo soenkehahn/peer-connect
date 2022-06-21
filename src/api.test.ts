@@ -204,7 +204,7 @@ describe("parseJSON", () => {
 
     test("missing fields", () => {
       expect(() => parseJSON({ foo: "number" }, "{}")).toThrow(
-        'missing field "foo" in: {}'
+        "expected: { foo: number }, got: {}"
       );
     });
 

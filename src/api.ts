@@ -45,45 +45,47 @@ export type ToType<T extends Type> = T extends "string"
 
 export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
   const value: unknown = JSON.parse(json);
-  checkJSON(typ, value);
-  return value as any;
+  if (!isOfType(typ, value)) {
+    throw new Error(
+      `expected: ${typeToString(typ)}, got: ${JSON.stringify(value)}`
+    );
+  }
+  return value;
 };
 
-const checkJSON = <T extends Type>(typ: T, value: unknown) => {
-  const error = () =>
-    new Error(`expected: ${typeToString(typ)}, got: ${JSON.stringify(value)}`);
+const isOfType = <T extends Type>(
+  typ: T,
+  value: unknown
+): value is ToType<T> => {
   if (typ === "string") {
     if (typeof value !== "string") {
-      throw error();
+      return false;
     }
   } else if (typ === "number") {
     if (typeof value !== "number") {
-      throw error();
+      return false;
     }
   } else if (typ === null) {
     if (value !== null) {
-      throw error();
+      return false;
     }
   } else if (typeof typ === "object") {
     if (typeof value !== "object" || value === null) {
-      throw error();
+      return false;
     }
     for (const field in typ) {
       if (!Object.keys(value).includes(field)) {
-        throw new Error(
-          `missing field "${field}" in: ${JSON.stringify(value)}`
-        );
+        return false;
       }
-      try {
-        checkJSON(typ[field], (value as any)[field]);
-      } catch (e) {
-        throw error();
+      if (!isOfType(typ[field], (value as any)[field])) {
+        return false;
       }
     }
   } else {
     checkNever(typ);
     throw "impossible";
   }
+  return true;
 };
 
 const checkNever = (input: never) => {
