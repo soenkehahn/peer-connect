@@ -16,18 +16,30 @@ const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
     }
     const result: string = value;
     return result as any;
+  } else if (typ === "number") {
+    if (typeof value !== "number") {
+      throw "not";
+    }
+    const result: number = value;
+    return result as any;
   }
   throw "nyi parse";
 };
 
 /// Apis
 
-export type Api = {
+export type Api = { [name: string]: Endpoint };
+
+export type ToServer<T extends Api> = {
+  [Field in keyof T]: ToFunction<T[Field]>;
+};
+
+export type Endpoint = {
   input: Type;
   output: Type;
 };
 
-export type ToServer<T extends Api> = (
+export type ToFunction<T extends Endpoint> = (
   input: ToType<T["input"]>
 ) => ToType<T["output"]>;
 
@@ -35,9 +47,10 @@ export const handleMessages =
   <ServerApi extends Api>(
     api: ServerApi,
     server: ToServer<ServerApi>
-  ): ((input: string) => string) =>
-  (input: string): string => {
-    const inputType: ServerApi["input"] = api.input;
-    const parsed: ToType<ServerApi["input"]> = parseJSON(inputType, input);
-    return JSON.stringify(server(parsed));
+  ): ((endpoint: string, input: string) => string) =>
+  (endpoint: string, input: string): string => {
+    const functionn = api[endpoint];
+    const inputType = functionn.input;
+    const parsed = parseJSON(inputType, input);
+    return JSON.stringify(server[endpoint](parsed as any));
   };
