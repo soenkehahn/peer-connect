@@ -211,7 +211,7 @@ describe("apiClient", () => {
     const bServer: ToServer<BApi> = {
       double: (x) => x * 2,
     };
-    const [a, b] = await Promise.all([
+    const [a, _b] = await Promise.all([
       connect({
         signalingServer: url,
         offer: aApi,

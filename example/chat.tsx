@@ -1,53 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
-import { Channel, connect } from "../src/webrtcClient";
-import { withLoader } from "./loader";
+import { ToServer } from "../src/api";
+import { connect } from "../src/apiClient";
 
-const App = () =>
-  withLoader(
-    () =>
-      connect({
-        signalingServer: "ws://localhost:1233",
-        offer: "chat",
-        seek: "chat",
-      }),
-    (peer: Channel) => () => {
-      const [messages, setMessages] = useState<{ inner: Array<string> }>({
-        inner: [],
-      });
-      (async () => {
-        while (true) {
-          const message = await peer.next();
+const chatApi: ChatApi = {
+  sendMessage: {
+    input: "string",
+    output: null,
+  },
+};
+
+type ChatApi = {
+  sendMessage: {
+    input: "string";
+    output: null;
+  };
+};
+
+const App = () => {
+  const [peer, setPeer] = useState<ToServer<ChatApi> | null>(null);
+  const [messages, setMessages] = useState<{ inner: Array<string> }>({
+    inner: [],
+  });
+  useEffect(() => {
+    connect({
+      signalingServer: "ws://localhost:1233",
+      offer: chatApi,
+      server: {
+        sendMessage: (message) => {
           messages.inner.push(message);
           setMessages({ ...messages });
-        }
-      })();
+          return null;
+        },
+      },
+      seek: chatApi,
+    }).then(setPeer);
+  }, []);
 
-      const [inputValue, setInputValue] = useState("");
-      const handleKeyDown = (key: string) => {
-        if (key === "Enter") {
-          peer.send(inputValue);
-          setInputValue("");
-        }
-      };
-
-      return (
-        <>
-          <input
-            value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
-            onKeyDown={(event) => handleKeyDown(event.key)}
-          />
-          <br />
-          <ul>
-            {messages.inner.map((message, i) => (
-              <li key={i}>{message}</li>
-            ))}
-          </ul>
-        </>
-      );
+  const [inputValue, setInputValue] = useState("");
+  const handleKeyDown = (key: string) => {
+    if (key === "Enter") {
+      peer?.sendMessage(inputValue);
+      setInputValue("");
     }
+  };
+
+  if (!peer) {
+    return <div>not connected...</div>;
+  }
+
+  return (
+    <>
+      <input
+        value={inputValue}
+        onChange={(event) => setInputValue(event.target.value)}
+        onKeyDown={(event) => handleKeyDown(event.key)}
+      />
+      <br />
+      <ul>
+        {messages.inner.map((message, i) => (
+          <li key={i}>{message}</li>
+        ))}
+      </ul>
+    </>
   );
+};
 
 const root = document.getElementById("root");
 if (root) {

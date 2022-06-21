@@ -1,67 +1,67 @@
-import * as uuid from "uuid";
-import { withLoader } from "./loader";
-import { ReactElement, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
-import { Channel, connect } from "../src/webrtcClient";
+import { connect } from "../src/apiClient";
 import React from "react";
+import { ToServer } from "../src/api";
 
-const App = ({ a, b }: { a: string; b: string }) => {
+const App = () => {
   return (
     <>
-      <HelloWorldPeer
-        name="a"
-        signalingServer={"ws://localhost:1233"}
-        offer={a}
-        seek={b}
-      />
+      <HelloWorldPeer name="a" signalingServer={"ws://localhost:1233"} />
       <br />
-      <HelloWorldPeer
-        name="b"
-        signalingServer={"ws://localhost:1233"}
-        offer={b}
-        seek={a}
-      />
+      <HelloWorldPeer name="b" signalingServer={"ws://localhost:1233"} />
     </>
   );
 };
 
-const HelloWorldPeer = (props: {
-  signalingServer: string;
-  name: string;
-  offer: string;
-  seek: string;
-}): ReactElement =>
-  withLoader(
-    () => connect({ ...props }),
-    (peer: Channel) => () => {
-      useEffect(() => {
-        (async () => {
-          peer.send(`ping from ${props.name}`);
-        })();
-      }, []);
+const pingApi: PingApi = {
+  ping: {
+    input: "string",
+    output: null,
+  },
+};
 
-      const [received, setReceived] = useState<string>("");
-      useEffect(() => {
-        (async () => {
-          while (true) {
-            setReceived(await peer.next());
-          }
-        })();
-      }, [setReceived]);
+type PingApi = {
+  ping: {
+    input: "string";
+    output: null;
+  };
+};
 
-      return (
-        <div>
-          Peer: {props.name}
-          <br />
-          {received}
-        </div>
-      );
-    }
+const HelloWorldPeer = (props: { signalingServer: string; name: string }) => {
+  const [peer, setPeer] = useState<ToServer<PingApi> | null>(null);
+  const [received, setReceived] = useState<string>("");
+
+  useEffect(() => {
+    connect({
+      signalingServer: props.signalingServer,
+      offer: pingApi,
+      server: {
+        ping: (message) => {
+          setReceived(message);
+          return null;
+        },
+      },
+      seek: pingApi,
+    }).then(setPeer);
+  }, [setReceived]);
+
+  useEffect(() => {
+    (async () => {
+      peer?.ping(`ping from ${props.name}`);
+    })();
+  }, [peer]);
+
+  return (
+    <div>
+      Peer: {props.name}
+      <br />
+      {received}
+    </div>
   );
+};
 
 const root = document.getElementById("root");
 if (root) {
-  const a = uuid.v4();
-  const b = uuid.v4();
-  ReactDOM.createRoot(root).render(<App {...{ a, b }} />);
+  ReactDOM.createRoot(root).render(<App />);
 }
