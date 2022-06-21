@@ -1,14 +1,12 @@
 import React, { useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { Channel, connect } from "../src/webrtcClient";
-import { webrtcAdapter } from "../src/webrtcAdapter";
 import { withLoader } from "./loader";
 
 const App = () =>
   withLoader(
     () =>
       connect({
-        webrtcAdapter,
         signalingServer: "ws://localhost:1233",
         offer: "chat",
         seek: "chat",

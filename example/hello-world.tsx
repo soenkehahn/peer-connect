@@ -3,7 +3,6 @@ import { withLoader } from "./loader";
 import { ReactElement, useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { Channel, connect } from "../src/webrtcClient";
-import { webrtcAdapter } from "../src/webrtcAdapter";
 import React from "react";
 
 const App = ({ a, b }: { a: string; b: string }) => {
@@ -33,7 +32,7 @@ const HelloWorldPeer = (props: {
   seek: string;
 }): ReactElement =>
   withLoader(
-    () => connect({ ...props, webrtcAdapter }),
+    () => connect({ ...props }),
     (peer: Channel) => () => {
       useEffect(() => {
         (async () => {

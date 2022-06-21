@@ -1,15 +1,13 @@
 /** @type {import('@jest/types').Config.InitialOptions} */
-const config = {
-  transform: {
-    "^.+\\.tsx?$": [
-      "esbuild-jest",
-      {
-        sourcemap: true,
-      },
-    ],
-  },
+module.exports = {
+  preset: "ts-jest",
   testPathIgnorePatterns: ["/node_modules/", "/dist/"],
   testEnvironment: "jsdom",
+  globals: {
+    "ts-jest": {
+      tsconfig: {
+        noUnusedParameters: false,
+      },
+    },
+  },
 };
-
-module.exports = config;
