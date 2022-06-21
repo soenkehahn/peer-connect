@@ -117,25 +117,25 @@ export const handleMessages =
   <ServerApi extends Api>(
     api: ServerApi,
     server: ToServer<ServerApi>
-  ): ((message: string) => Promise<string>) =>
-  async (message: string): Promise<string> => {
-    const parsed = parseJSON({ endpoint: "string" }, message);
+  ): ((message: unknown) => Promise<unknown>) =>
+  async (message: unknown): Promise<unknown> => {
+    const parsed = verify({ endpoint: "string" }, message);
     const endpoint = parsed.endpoint;
     const input: unknown = (parsed as any).input;
     verify(api[endpoint].input, input);
-    return JSON.stringify(await server[endpoint](input as any));
+    return await server[endpoint](input as any);
   };
 
 export const makeServer = <ServerApi extends Api>(
   api: ServerApi,
-  relayMessage: (message: string) => Promise<string>
+  relayMessage: (message: unknown) => Promise<unknown>
 ): ToServer<ServerApi> => {
   const server: any = {};
   for (const endpoint in api) {
     server[endpoint] = async (input: any) => {
-      const message = JSON.stringify({ endpoint, input });
+      const message = { endpoint, input };
       const response = await relayMessage(message);
-      return JSON.parse(response);
+      return response;
     };
   }
   return server;
