@@ -15,7 +15,7 @@ describe("handleMessages", () => {
         return null;
       },
     });
-    await handleMessage("endpoint", '"foo"');
+    await handleMessage('{"endpoint": "endpoint", "input": "foo"}');
     expect(calls).toEqual(["foo"]);
   });
 
@@ -37,7 +37,11 @@ describe("handleMessages", () => {
     const handleMessage = handleMessages(MyApi, {
       endpoint: (input: string): number => input.length,
     });
-    expect(JSON.parse(await handleMessage("endpoint", '"foo"'))).toEqual(3);
+    expect(
+      JSON.parse(
+        await handleMessage('{"endpoint": "endpoint", "input": "foo"}')
+      )
+    ).toEqual(3);
   });
 
   it("produces type errors if the output value doesn't match", () => {
@@ -74,8 +78,12 @@ describe("handleMessages", () => {
       a: (input: string): number => input.length,
       b: (n: number): string => "a".repeat(n),
     });
-    expect(await handleMessage("a", '"foo"')).toEqual("3");
-    expect(await handleMessage("b", "3")).toEqual('"aaa"');
+    expect(await handleMessage('{"endpoint": "a", "input": "foo"}')).toEqual(
+      "3"
+    );
+    expect(await handleMessage('{"endpoint": "b", "input": 3}')).toEqual(
+      '"aaa"'
+    );
   });
 
   it("works for async functions", async () => {
@@ -87,7 +95,9 @@ describe("handleMessages", () => {
     const handleMessage = handleMessages(MyApi, {
       a: (input: string): Promise<number> => Promise.resolve(input.length),
     });
-    expect(await handleMessage("a", '"foo"')).toEqual("3");
+    expect(await handleMessage('{"endpoint": "a", "input": "foo"}')).toEqual(
+      "3"
+    );
   });
 
   test("apis can be serialized", () => {
@@ -110,9 +120,9 @@ describe("handleMessages", () => {
     const handleMessage = handleMessages(MyApi, {
       a: (input: { s: string; n: number }): string => input.s.repeat(input.n),
     });
-    expect(await handleMessage("a", '{"s": "foo", "n": 3}')).toEqual(
-      '"foofoofoo"'
-    );
+    expect(
+      await handleMessage('{"endpoint": "a", "input": {"s": "foo", "n": 3}}')
+    ).toEqual('"foofoofoo"');
   });
 
   test("object outputs", async () => {
@@ -127,9 +137,24 @@ describe("handleMessages", () => {
         doubled: input.length * 2,
       }),
     });
-    expect(await handleMessage("a", '"foo"')).toEqual(
+    expect(await handleMessage('{"endpoint": "a", "input": "foo"}')).toEqual(
       '{"length":3,"doubled":6}'
     );
+  });
+
+  it("throws for invalid messages", async () => {
+    const MyApi: { endpoint: { input: "string"; output: null } } = {
+      endpoint: {
+        input: "string",
+        output: null,
+      },
+    };
+    const handleMessage = handleMessages(MyApi, {
+      endpoint: (_input: string): null => null,
+    });
+    await expect(
+      handleMessage('{"endpoint": "endpoint", "input": 42}')
+    ).rejects.toThrow("expected: string, got: 42");
   });
 });
 

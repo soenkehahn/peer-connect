@@ -45,6 +45,10 @@ export type ToType<T extends Type> = T extends "string"
 
 export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
   const value: unknown = JSON.parse(json);
+  return verify(typ, value);
+};
+
+const verify = <T extends Type>(typ: T, value: unknown): ToType<T> => {
   if (!isOfType(typ, value)) {
     throw new Error(
       `expected: ${typeToString(typ)}, got: ${JSON.stringify(value)}`
@@ -113,8 +117,11 @@ export const handleMessages =
   <ServerApi extends Api>(
     api: ServerApi,
     server: ToServer<ServerApi>
-  ): ((endpoint: string, input: string) => Promise<string>) =>
-  async (endpoint: string, input: string): Promise<string> => {
-    const parsed = parseJSON(api[endpoint].input, input);
-    return JSON.stringify(await server[endpoint](parsed as any));
+  ): ((message: string) => Promise<string>) =>
+  async (message: string): Promise<string> => {
+    const parsed = parseJSON({ endpoint: "string" }, message);
+    const endpoint = parsed.endpoint;
+    const input: unknown = (parsed as any).input;
+    verify(api[endpoint].input, input);
+    return JSON.stringify(await server[endpoint](input as any));
   };
