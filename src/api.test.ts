@@ -1,4 +1,4 @@
-import { Api, handleMessages, parseJSON } from "./api";
+import { Api, handleMessages, makeServer, parseJSON, ToServer } from "./api";
 
 describe("handleMessages", () => {
   it("allows to specify an api with a single function", async () => {
@@ -155,6 +155,52 @@ describe("handleMessages", () => {
     await expect(
       handleMessage('{"endpoint": "endpoint", "input": 42}')
     ).rejects.toThrow("expected: string, got: 42");
+  });
+});
+
+describe("makeServer", () => {
+  it("is the counterpart to handleMessages", async () => {
+    type MyApi = {
+      a: { input: "string"; output: "number" };
+    };
+    const myApi: MyApi = {
+      a: { input: "string", output: "number" },
+    };
+    const server: ToServer<MyApi> = { a: (input: string) => input.length };
+    const serializedServer: ToServer<MyApi> = makeServer(
+      myApi,
+      handleMessages(myApi, server)
+    );
+    expect(await serializedServer.a("foo")).toEqual(3);
+  });
+
+  it("works for object types", async () => {
+    type MyApi = {
+      a: {
+        input: { s: "string"; n: "number" };
+        output: { result: "string"; doubled: "number" };
+      };
+    };
+    const myApi: MyApi = {
+      a: {
+        input: { s: "string", n: "number" },
+        output: { result: "string", doubled: "number" },
+      },
+    };
+    const server: ToServer<MyApi> = {
+      a: (input: { s: string; n: number }) => ({
+        result: input.s.repeat(input.n),
+        doubled: input.n * 2,
+      }),
+    };
+    const serializedServer: ToServer<MyApi> = makeServer(
+      myApi,
+      handleMessages(myApi, server)
+    );
+    expect(await serializedServer.a({ s: "foo", n: 3 })).toEqual({
+      result: "foofoofoo",
+      doubled: 6,
+    });
   });
 });
 

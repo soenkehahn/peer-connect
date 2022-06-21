@@ -125,3 +125,18 @@ export const handleMessages =
     verify(api[endpoint].input, input);
     return JSON.stringify(await server[endpoint](input as any));
   };
+
+export const makeServer = <ServerApi extends Api>(
+  api: ServerApi,
+  relayMessage: (message: string) => Promise<string>
+): ToServer<ServerApi> => {
+  const server: any = {};
+  for (const endpoint in api) {
+    server[endpoint] = async (input: any) => {
+      const message = JSON.stringify({ endpoint, input });
+      const response = await relayMessage(message);
+      return JSON.parse(response);
+    };
+  }
+  return server;
+};
