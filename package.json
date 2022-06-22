@@ -2,9 +2,9 @@
   "name": "@shahn/peer-connect",
   "version": "0.0.1",
   "packageManager": "yarn@3.2.1",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "files": [
-    "dist"
+    "dist/src"
   ],
   "scripts": {
     "prepack": "jest && rm -rf dist && tsc",
