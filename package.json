@@ -10,7 +10,8 @@
     "prepack": "jest && rm -rf dist && tsc",
     "e2e": "ts-node ./e2e-tests.ts",
     "serve-example": "ts-node ./serve-example.ts",
-    "ci": "yarn install && yarn jest && yarn e2e"
+    "ci": "yarn install && yarn jest && yarn e2e",
+    "run-signaling-server": "ts-node ./run-signaling-server.ts"
   },
   "devDependencies": {
     "@types/jest": "^28.1.2",
