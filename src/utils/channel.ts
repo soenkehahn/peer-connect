@@ -15,7 +15,7 @@ export const websocketChannel = (url: string): Promise<Channel> => {
   });
 };
 
-export const rtcDataChannelToPeer = (channel: RTCDataChannel): Channel => {
+export const fromRtcDataChannel = (channel: RTCDataChannel): Channel => {
   return makeChannel(channel);
 };
 

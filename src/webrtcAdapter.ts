@@ -1,5 +1,5 @@
 import { HasColor } from "./signalingClient";
-import { Channel, rtcDataChannelToPeer } from "./utils/channel";
+import { Channel, fromRtcDataChannel } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
@@ -18,9 +18,9 @@ export const webrtcAdapter: WebrtcAdapter = {
           );
         };
         const channel = connection.createDataChannel("my channel");
-        channel.addEventListener("open", () => {
-          resolve(rtcDataChannelToPeer(channel));
-        });
+        channel.onopen = () => {
+          resolve(fromRtcDataChannel(channel));
+        };
         handleSignallingMessages(connection, signalingChannel);
       } else {
         connection.onnegotiationneeded = () => {
@@ -32,7 +32,7 @@ export const webrtcAdapter: WebrtcAdapter = {
         connection.ondatachannel = (event) => {
           const channel = event.channel;
           channel.onopen = () => {
-            resolve(rtcDataChannelToPeer(channel));
+            resolve(fromRtcDataChannel(channel));
           };
         };
         handleSignallingMessages(connection, signalingChannel);
