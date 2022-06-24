@@ -1,45 +1,57 @@
 import { HasColor } from "./signalingClient";
 import { Channel, fromRtcDataChannel } from "./utils/channel";
-import { WebrtcAdapter } from "./webrtcClient";
+import { Closeable, WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (signalingChannel: Channel & HasColor): Promise<Channel> => {
+  promote: async (
+    signalingChannel: Channel & HasColor
+  ): Promise<Channel & Closeable> => {
     const connection: RTCPeerConnection = new RTCPeerConnection({});
-    return new Promise<Channel>((resolve) => {
-      if (signalingChannel.color === "blue") {
-        connection.onicecandidate = ({ candidate }) => {
-          signalingChannel.send(JSON.stringify({ candidate }));
+    connection.onnegotiationneeded = async () => {
+      const offer = await connection.createOffer();
+      await connection.setLocalDescription(offer);
+      signalingChannel.send(
+        JSON.stringify({ desc: connection.localDescription })
+      );
+    };
+    connection.onicecandidate = ({ candidate }) => {
+      signalingChannel.send(JSON.stringify({ candidate }));
+    };
+    handleSignallingMessages(connection, signalingChannel);
+    if (signalingChannel.color === "blue") {
+      const rtcDataChannel = connection.createDataChannel("my channel");
+      return new Promise<Channel & Closeable>((resolve) => {
+        rtcDataChannel.onopen = () => {
+          resolve(toChannel(connection, rtcDataChannel));
         };
-        connection.onnegotiationneeded = async () => {
-          const offer = await connection.createOffer();
-          await connection.setLocalDescription(offer);
-          signalingChannel.send(
-            JSON.stringify({ desc: connection.localDescription })
-          );
-        };
-        const channel = connection.createDataChannel("my channel");
-        channel.onopen = () => {
-          resolve(fromRtcDataChannel(channel));
-        };
-        handleSignallingMessages(connection, signalingChannel);
-      } else {
-        connection.onnegotiationneeded = () => {
-          throw "negotiation needed";
-        };
-        connection.onicecandidate = ({ candidate }) => {
-          signalingChannel.send(JSON.stringify({ candidate }));
-        };
+      });
+    } else {
+      return new Promise<Channel & Closeable>((resolve) => {
         connection.ondatachannel = (event) => {
-          const channel = event.channel;
-          channel.onopen = () => {
-            resolve(fromRtcDataChannel(channel));
+          event.channel.onopen = () => {
+            resolve(toChannel(connection, event.channel));
           };
         };
-        handleSignallingMessages(connection, signalingChannel);
-      }
-    });
+      });
+    }
   },
 };
+
+function toChannel(
+  connection: RTCPeerConnection,
+  rtcDataChannel: RTCDataChannel
+): Channel & Closeable {
+  const channel: Channel & Closeable = {
+    ...fromRtcDataChannel(rtcDataChannel),
+    close: () => {
+      connection.close();
+    },
+  };
+  rtcDataChannel.onclose = () => {
+    channel.onclose?.();
+  };
+  return channel;
+}
 
 function handleSignallingMessages(
   connection: RTCPeerConnection,

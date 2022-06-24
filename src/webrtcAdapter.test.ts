@@ -1,5 +1,6 @@
 import { webrtcAdapter } from "./webrtcAdapter";
 import { Channel, HasColor } from "./signalingClient";
+import { Closeable } from "./webrtcClient";
 
 jest.setTimeout(1000);
 
@@ -17,6 +18,11 @@ describe("webrtcAdapter", () => {
     }
 
     ondatachannel?: (event: { channel: RTCDataChannelMock }) => void;
+
+    isClosed: boolean = false;
+    close() {
+      this.isClosed = true;
+    }
   }
 
   class RTCDataChannelMock {
@@ -27,14 +33,15 @@ describe("webrtcAdapter", () => {
       rtcDataChannelMock = this;
     }
 
-    onopen?: () => void;
-    onmessage?: (event: { data: string }) => void;
-
     sent: Array<string> = [];
 
     send(message: string) {
       this.sent.push(message);
     }
+
+    onopen?: () => void;
+    onmessage?: (event: { data: string }) => void;
+    onclose?: () => void;
   }
 
   let rtcPeerConnectionMock: null | RTCPeerConnectionMock;
@@ -45,7 +52,7 @@ describe("webrtcAdapter", () => {
     rtcDataChannelMock = null;
   });
 
-  async function setupInitiator(): Promise<Channel> {
+  async function setupInitiator(): Promise<Channel & Closeable> {
     const mockSignalingChannel: Channel & HasColor = {
       next() {
         return new Promise(() => {});
@@ -60,7 +67,7 @@ describe("webrtcAdapter", () => {
     return await webrtcChannelPromise;
   }
 
-  async function setupJoiner(): Promise<Channel> {
+  async function setupJoiner(): Promise<Channel & Closeable> {
     const mockSignalingChannel: Channel & HasColor = {
       next() {
         return new Promise(() => {});
@@ -78,7 +85,7 @@ describe("webrtcAdapter", () => {
     return await webrtcChannelPromise;
   }
 
-  const setups: Array<[string, () => Promise<Channel>]> = [
+  const setups: Array<[string, () => Promise<Channel & Closeable>]> = [
     ["when initiating the rtc data channel", setupInitiator],
     ["when joining the rtc data channel", setupJoiner],
   ];
@@ -96,6 +103,22 @@ describe("webrtcAdapter", () => {
         const messagePromise = webrtcChannel.next();
         rtcDataChannelMock?.onmessage?.({ data: "foo" });
         expect(await messagePromise).toEqual("foo");
+      });
+
+      it("calls onclose when the data channel is closed from the other side", async () => {
+        const webrtcChannel = await setupWebrtcChannel();
+        let closed = false;
+        webrtcChannel.onclose = () => {
+          closed = true;
+        };
+        rtcDataChannelMock?.onclose?.();
+        expect(closed).toEqual(true);
+      });
+
+      it("allows to close the peer connection", async () => {
+        const webrtcChannel = await setupWebrtcChannel();
+        webrtcChannel.close();
+        expect(rtcPeerConnectionMock?.isClosed).toEqual(true);
       });
     });
   }
