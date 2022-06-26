@@ -1,7 +1,8 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { wait } from "./utils";
+import { wait, waitFor } from "./utils";
 import { Channel, websocketChannel } from "./utils/channel";
+import { Closeable } from "./webrtcClient";
 
 const skipConfirmation = async (client: Channel): Promise<void> => {
   expect(JSON.parse(await client.next())).toMatchObject({ success: true });
@@ -24,8 +25,8 @@ describe("runServer", () => {
   });
 
   describe("when two peers connect", () => {
-    let a: Channel;
-    let b: Channel;
+    let a: Channel & Closeable;
+    let b: Channel & Closeable;
     beforeEach(async () => {
       a = await websocketChannel(`${url}/?offer=a&seek=a`);
       b = await websocketChannel(`${url}/?offer=a&seek=a`);
@@ -55,6 +56,20 @@ describe("runServer", () => {
 
       a.send("from a 2");
       expect(await b.next()).toEqual("from a 2");
+    });
+
+    it("relays that a websocket is closed to the peer", async () => {
+      let bIsClosed = false;
+      b.onclose = () => (bIsClosed = true);
+      a.close();
+      await waitFor(500, () => expect(bIsClosed).toEqual(true));
+    });
+
+    it("relays that a websocket is closed in both directions", async () => {
+      let aIsClosed = false;
+      a.onclose = () => (aIsClosed = true);
+      b.close();
+      await waitFor(500, () => expect(aIsClosed).toEqual(true));
     });
   });
 

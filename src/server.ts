@@ -88,4 +88,10 @@ const connectPeers = (a: WebSocket, b: WebSocket) => {
   b.onmessage = (event) => {
     a.send(event.data);
   };
+  a.onclose = () => {
+    b.close();
+  };
+  b.onclose = () => {
+    a.close();
+  };
 };

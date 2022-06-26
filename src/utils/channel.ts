@@ -1,16 +1,27 @@
+import { Closeable } from "../webrtcClient";
+
 export type Channel = {
   next: () => Promise<string>;
   send: (message: string) => void;
 };
 
-export const websocketChannel = (url: string): Promise<Channel> => {
+export const websocketChannel = (url: string): Promise<Channel & Closeable> => {
   const websocket = new WebSocket(url);
-  return new Promise<Channel>((resolve, reject) => {
+  return new Promise<Channel & Closeable>((resolve, reject) => {
     websocket.onerror = (event) => {
       reject(event);
     };
     websocket.onopen = () => {
-      resolve(makeChannel(websocket));
+      const channel: Channel & Closeable = {
+        ...makeChannel(websocket),
+        close() {
+          websocket.close();
+        },
+      };
+      websocket.onclose = () => {
+        channel.onclose?.();
+      };
+      resolve(channel);
     };
   });
 };
