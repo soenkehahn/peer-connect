@@ -1,5 +1,5 @@
 export type Channel = {
-  next: () => Promise<string>;
+  next: () => Promise<string | null>;
   send: (message: string) => void;
   onclose?: () => void;
   close: () => void;
@@ -12,47 +12,27 @@ export const websocketChannel = (url: string): Promise<Channel> => {
       reject(event);
     };
     websocket.onopen = () => {
-      const channel: Channel = {
-        ...makeChannel(websocket),
-        close() {
-          websocket.close();
-        },
-      };
-      websocket.onclose = () => {
-        channel.onclose?.();
-      };
-      resolve(channel);
+      resolve(makeChannel(websocket));
     };
   });
 };
 
-export function fromRtcDataChannel(
-  connection: RTCPeerConnection,
-  rtcDataChannel: RTCDataChannel
-): Channel {
-  const channel: Channel = {
-    ...makeChannel(rtcDataChannel),
-    close: () => {
-      connection.close();
-    },
-  };
-  rtcDataChannel.onclose = () => {
-    channel.onclose?.();
-  };
-  return channel;
+export function fromRtcDataChannel(rtcDataChannel: RTCDataChannel): Channel {
+  return makeChannel(rtcDataChannel);
 }
 
-const makeChannel = (inner: {
+const makeChannel = (innerChannel: {
   send: (message: string) => void;
   onmessage: ((event: MessageEvent) => any) | null;
-}): {
-  next: () => Promise<string>;
-  send: (message: string) => void;
-} => {
+  close: () => void;
+  onclose?:
+    | ((this: RTCDataChannel & WebSocket, event: Event & CloseEvent) => any)
+    | null;
+}): Channel => {
   const bufferedMessages: Array<string> = [];
-  const bufferedResolves: Array<(message: string) => void> = [];
+  const bufferedResolves: Array<(message: string | null) => void> = [];
 
-  inner.onmessage = (event: MessageEvent) => {
+  innerChannel.onmessage = (event: MessageEvent) => {
     if (bufferedResolves.length > 0) {
       const call = bufferedResolves.pop() as (message: string) => void;
       call(event.data);
@@ -61,19 +41,41 @@ const makeChannel = (inner: {
     }
   };
 
-  return {
-    next: () =>
-      new Promise((resolve) => {
+  let closed = false;
+
+  const channel: Channel = {
+    next: () => {
+      if (closed) {
+        return Promise.resolve(null);
+      }
+      return new Promise<string | null>((resolve) => {
         if (bufferedMessages.length > 0) {
           const next = bufferedMessages.pop() as string;
           resolve(next);
         } else {
           bufferedResolves.push(resolve);
         }
-      }),
+      });
+    },
 
     send: (message: string) => {
-      inner.send(message);
+      if (closed) {
+        throw new Error("cannot send: peer is closed");
+      }
+      innerChannel.send(message);
+    },
+
+    close() {
+      closed = true;
+      innerChannel.close();
+      for (const resolve of bufferedResolves) {
+        resolve(null);
+      }
     },
   };
+  innerChannel.onclose = () => {
+    channel.close();
+    channel.onclose?.();
+  };
+  return channel;
 };

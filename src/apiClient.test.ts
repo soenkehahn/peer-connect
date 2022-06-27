@@ -1,7 +1,7 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { connect } from "./apiClient";
-import { ToServer } from "./api";
+import { waitFor } from "./utils";
+import { connect, ToPeer } from "./apiClient";
 
 jest.mock("./webrtcAdapter");
 
@@ -31,6 +31,7 @@ describe("apiClient", () => {
         aReceived.push(message);
         return null;
       },
+      close() {},
     };
     const bReceived: Array<string> = [];
     const bServer = {
@@ -38,6 +39,7 @@ describe("apiClient", () => {
         bReceived.push(message);
         return null;
       },
+      close() {},
     };
     const [a, b] = await Promise.all([
       connect({
@@ -82,7 +84,7 @@ describe("apiClient", () => {
     };
     const aReceived: Array<[string, number]> = [];
     let bStatus: string = "";
-    const aServer: ToServer<MyApi> = {
+    const aServer: ToPeer<MyApi> = {
       sendMessage: (input: { message: string; priority: number }) => {
         aReceived.push([input.message, input.priority]);
         return { read: "read by a" };
@@ -91,10 +93,11 @@ describe("apiClient", () => {
         bStatus = input;
         return null;
       },
+      close() {},
     };
     const bReceived: Array<[string, number]> = [];
     let aStatus: string = "";
-    const bServer: ToServer<MyApi> = {
+    const bServer: ToPeer<MyApi> = {
       sendMessage: (input: { message: string; priority: number }) => {
         bReceived.push([input.message, input.priority]);
         return { read: "read by b" };
@@ -103,6 +106,7 @@ describe("apiClient", () => {
         aStatus = input;
         return null;
       },
+      close() {},
     };
     const [a, b] = await Promise.all([
       connect({
@@ -159,18 +163,20 @@ describe("apiClient", () => {
       },
     };
     const aCalls: Array<string> = [];
-    const aServer: ToServer<AApi> = {
+    const aServer: ToPeer<AApi> = {
       callA: (x) => {
         aCalls.push(x);
         return null;
       },
+      close() {},
     };
     const bCalls: Array<number> = [];
-    const bServer: ToServer<BApi> = {
+    const bServer: ToPeer<BApi> = {
       callB: (x) => {
         bCalls.push(x);
         return null;
       },
+      close() {},
     };
     const [a, b] = await Promise.all([
       connect({
@@ -207,9 +213,12 @@ describe("apiClient", () => {
         output: "number",
       },
     };
-    const aServer: ToServer<AApi> = {};
-    const bServer: ToServer<BApi> = {
+    const aServer: ToPeer<AApi> = {
+      close: () => {},
+    };
+    const bServer: ToPeer<BApi> = {
       double: (x) => x * 2,
+      close() {},
     };
     const [a, _b] = await Promise.all([
       connect({
@@ -227,5 +236,77 @@ describe("apiClient", () => {
     ]);
     const results = await Promise.all([1, 2, 3, 4, 5].map((i) => a.double(i)));
     expect(results).toEqual([2, 4, 6, 8, 10]);
+  });
+
+  describe("closing", () => {
+    it("relays closing the connection", async () => {
+      type AApi = {};
+      const aApi: AApi = {};
+      type BApi = {};
+      const bApi: BApi = {};
+      const aServer: ToPeer<AApi> = {
+        close() {},
+      };
+      let bIsClosed = false;
+      const bServer: ToPeer<BApi> = {
+        close: () => (bIsClosed = true),
+      };
+      const [a, _b] = await Promise.all([
+        connect({
+          signalingServer: url,
+          offer: aApi,
+          server: aServer,
+          seek: bApi,
+        }),
+        connect({
+          signalingServer: url,
+          offer: bApi,
+          server: bServer,
+          seek: aApi,
+        }),
+      ]);
+      a.close();
+      await waitFor(500, () => expect(bIsClosed).toEqual(true));
+    });
+
+    it("errors when trying to call a function on a remote closed peer", async () => {
+      type AApi = { foo: { input: "number"; output: null } };
+      const aApi: AApi = { foo: { input: "number", output: null } };
+      type BApi = {};
+      const bApi: BApi = {};
+      let aIsClosed = false;
+      const aServer: ToPeer<AApi> = {
+        foo() {
+          return null;
+        },
+        close() {
+          aIsClosed = true;
+        },
+      };
+      let bIsClosed = false;
+      const bServer: ToPeer<BApi> = {
+        close: () => (bIsClosed = true),
+      };
+      const [a, _b] = await Promise.all([
+        connect({
+          signalingServer: url,
+          offer: bApi,
+          server: bServer,
+          seek: aApi,
+        }),
+        connect({
+          signalingServer: url,
+          offer: aApi,
+          server: aServer,
+          seek: bApi,
+        }),
+      ]);
+      a.close();
+      await waitFor(500, () => expect(aIsClosed).toEqual(true));
+      await waitFor(500, () => expect(bIsClosed).toEqual(true));
+      await expect(a.foo(42)).rejects.toEqual(
+        new Error("cannot send: peer is closed")
+      );
+    });
   });
 });

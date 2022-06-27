@@ -13,7 +13,11 @@ export const connect = async (args: {
   let channel: Channel & HasColorOptional = await websocketChannel(
     `${args.url}/?offer=${args.offer}&seek=${args.seek}`
   );
-  let confirmation = parseConfirmation(await channel.next());
+  let json = await channel.next();
+  if (json === null) {
+    throw new Error("did not receive confirmation message");
+  }
+  let confirmation = parseConfirmation(json);
   if (!confirmation.success) {
     throw new Error("unexpected signaling server message: " + confirmation);
   }

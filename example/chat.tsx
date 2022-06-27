@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
-import { ToServer } from "../src/api";
-import { connect } from "../src/apiClient";
+import { connect, ToPeer } from "../src/apiClient";
 
 const chatApi: ChatApi = {
   sendMessage: {
@@ -18,7 +17,7 @@ type ChatApi = {
 };
 
 const App = () => {
-  const [peer, setPeer] = useState<ToServer<ChatApi> | null>(null);
+  const [peer, setPeer] = useState<ToPeer<ChatApi> | null>(null);
   const [messages, setMessages] = useState<{ inner: Array<string> }>({
     inner: [],
   });
@@ -27,11 +26,12 @@ const App = () => {
       signalingServer: "ws://localhost:1233",
       offer: chatApi,
       server: {
-        sendMessage: (message) => {
+        sendMessage: (message: string) => {
           messages.inner.push(message);
           setMessages({ ...messages });
           return null;
         },
+        close() {},
       },
       seek: chatApi,
     }).then(setPeer);

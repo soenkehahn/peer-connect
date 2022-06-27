@@ -39,6 +39,18 @@ describe("webrtcAdapter", () => {
       this.sent.push(message);
     }
 
+    closeHandlers: Array<() => void> = [];
+    addEventListener(event: string, handler: () => void) {
+      if (event !== "close") {
+        throw `addEventListener: unknown event: ${event}`;
+      }
+      this.closeHandlers.push(handler);
+    }
+    close() {
+      for (const handler of this.closeHandlers) {
+        handler();
+      }
+    }
     onopen?: () => void;
     onmessage?: (event: { data: string }) => void;
     onclose?: () => void;

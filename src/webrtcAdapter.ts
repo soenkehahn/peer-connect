@@ -20,14 +20,20 @@ export const webrtcAdapter: WebrtcAdapter = {
       const rtcDataChannel = connection.createDataChannel("my channel");
       return new Promise<Channel>((resolve) => {
         rtcDataChannel.onopen = () => {
-          resolve(fromRtcDataChannel(connection, rtcDataChannel));
+          rtcDataChannel.addEventListener("close", () => {
+            connection.close();
+          });
+          resolve(fromRtcDataChannel(rtcDataChannel));
         };
       });
     } else {
       return new Promise<Channel>((resolve) => {
         connection.ondatachannel = (event) => {
           event.channel.onopen = () => {
-            resolve(fromRtcDataChannel(connection, event.channel));
+            event.channel.addEventListener("close", () => {
+              connection.close();
+            });
+            resolve(fromRtcDataChannel(event.channel));
           };
         };
       });
@@ -42,7 +48,11 @@ function handleSignallingMessages(
   void (async () => {
     try {
       while (true) {
-        const message = JSON.parse(await signalingChannel.next());
+        const json = await signalingChannel.next();
+        if (json === null) {
+          throw new Error("expected signaling messages");
+        }
+        const message = JSON.parse(json);
         if (message.desc) {
           const desc = message.desc;
           if (desc.type === "offer") {

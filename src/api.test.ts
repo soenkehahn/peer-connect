@@ -147,7 +147,7 @@ describe("handleMessages", () => {
     });
     await expect(
       handleMessage({ endpoint: "endpoint", input: 42 })
-    ).rejects.toThrow("expected: string, got: 42");
+    ).rejects.toEqual(new Error("expected: string, got: 42"));
   });
 });
 

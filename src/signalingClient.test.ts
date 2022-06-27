@@ -1,6 +1,6 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { HasColor, connect } from "./signalingClient";
+import { connect, HasColor } from "./signalingClient";
 import { waitFor } from "./utils";
 import { Channel } from "./utils/channel";
 
@@ -52,17 +52,50 @@ describe("offer & seek", () => {
     expect(new Set([a.color, b.color])).toEqual(new Set(["blue", "green"]));
   });
 
-  it("relays closing to peers", async () => {
-    let bIsClosed = false;
-    b.onclose = () => (bIsClosed = true);
-    a.close();
-    await waitFor(500, () => expect(bIsClosed).toEqual(true));
-  });
+  describe("closing channels", () => {
+    it("relays closing to peers", async () => {
+      let bIsClosed = false;
+      b.onclose = () => (bIsClosed = true);
+      a.close();
+      await waitFor(500, () => expect(bIsClosed).toEqual(true));
+    });
 
-  it("relays closing to peers in the other direction", async () => {
-    let aIsClosed = false;
-    a.onclose = () => (aIsClosed = true);
-    b.close();
-    await waitFor(500, () => expect(aIsClosed).toEqual(true));
+    it("relays closing to peers in the other direction", async () => {
+      let aIsClosed = false;
+      a.onclose = () => (aIsClosed = true);
+      b.close();
+      await waitFor(500, () => expect(aIsClosed).toEqual(true));
+    });
+
+    describe("next yields null when the server is closed", () => {
+      const tests: Array<() => Promise<void>> = [
+        async () => {
+          a.close();
+          expect(await a.next()).toEqual(null);
+        },
+        async () => {
+          a.close();
+          expect(await b.next()).toEqual(null);
+        },
+        async () => {
+          a.close();
+          expect(await b.next()).toEqual(null);
+          expect(await a.next()).toEqual(null);
+        },
+        async () => {
+          const promise = a.next();
+          a.close();
+          expect(await promise).toEqual(null);
+        },
+        async () => {
+          const promise = b.next();
+          a.close();
+          expect(await promise).toEqual(null);
+        },
+      ];
+      tests.forEach((action, i) => {
+        test(`scenario ${i + 1}`, action);
+      });
+    });
   });
 });

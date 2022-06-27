@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
-import { connect } from "../src/apiClient";
+import { connect, ToPeer } from "../src/apiClient";
 import React from "react";
-import { ToServer } from "../src/api";
 
 const App = () => {
   return (
     <>
       <HelloWorldPeer name="a" signalingServer={"ws://localhost:1233"} />
-      <br />
+      <hr />
       <HelloWorldPeer name="b" signalingServer={"ws://localhost:1233"} />
     </>
   );
@@ -29,7 +28,8 @@ type PingApi = {
 };
 
 const HelloWorldPeer = (props: { signalingServer: string; name: string }) => {
-  const [peer, setPeer] = useState<ToServer<PingApi> | null>(null);
+  const [counter, setCounter] = useState(0);
+  const [peer, setPeer] = useState<null | ToPeer<PingApi> | "closed">(null);
   const [received, setReceived] = useState<string>("");
 
   useEffect(() => {
@@ -37,24 +37,49 @@ const HelloWorldPeer = (props: { signalingServer: string; name: string }) => {
       signalingServer: props.signalingServer,
       offer: pingApi,
       server: {
-        ping: (message) => {
+        ping: (message: string) => {
           setReceived(message);
           return null;
         },
+        close: () => {
+          setPeer("closed");
+        },
       },
       seek: pingApi,
-    }).then(setPeer);
+    }).then((peer) => {
+      peer.ping(`ping from ${props.name}`);
+      setPeer(peer);
+    });
   }, [setReceived]);
 
   useEffect(() => {
     (async () => {
-      peer?.ping(`ping from ${props.name}`);
+      if (peer !== "closed") {
+        peer?.ping(`ping from ${props.name}`);
+      }
     })();
   }, [peer]);
 
   return (
     <div>
       Peer: {props.name}
+      <br />
+      <button
+        onClick={() => {
+          if (peer !== "closed") {
+            peer?.ping(`ping from ${props.name}: ${counter}`);
+          }
+          setCounter(counter + 1);
+        }}
+      >
+        send ping
+      </button>
+      <br />
+      {peer === "closed" ? (
+        `${props.name} is closed`
+      ) : (
+        <button onClick={() => peer?.close()}>close {props.name}</button>
+      )}
       <br />
       {received}
     </div>
