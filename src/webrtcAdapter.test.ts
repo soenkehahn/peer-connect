@@ -17,12 +17,13 @@ describe("webrtcAdapter", () => {
       return new RTCDataChannelMock();
     }
 
-    ondatachannel?: (event: { channel: RTCDataChannelMock }) => void;
-
     isClosed: boolean = false;
     close() {
       this.isClosed = true;
     }
+
+    addEventListener() {}
+    ondatachannel?: (event: { channel: RTCDataChannelMock }) => void;
   }
 
   class RTCDataChannelMock {

@@ -15,6 +15,13 @@ export const webrtcAdapter: WebrtcAdapter = {
     connection.onicecandidate = ({ candidate }) => {
       signalingChannel.send(JSON.stringify({ candidate }));
     };
+    connection.addEventListener("icecandidateerror", (e) => {
+      if (e instanceof RTCPeerConnectionIceErrorEvent) {
+        console.error(`warning: ${e.errorText}`);
+      } else {
+        console.error(`warning: ${e}`);
+      }
+    });
     handleSignallingMessages(connection, signalingChannel);
     if (signalingChannel.color === "blue") {
       const rtcDataChannel = connection.createDataChannel("my channel");
