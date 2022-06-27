@@ -1,9 +1,9 @@
 import { connect as signalingConnect, HasColor } from "./signalingClient";
-import { Channel, Closeable } from "./utils/channel";
+import { Channel } from "./utils/channel";
 import { webrtcAdapter } from "./webrtcAdapter";
 
 export type WebrtcAdapter = {
-  promote: (channel: Channel & HasColor) => Promise<Channel & Closeable>;
+  promote: (channel: Channel & HasColor) => Promise<Channel>;
 };
 
 export const connect = async (args: {

@@ -1,21 +1,18 @@
-export type Closeable = {
+export type Channel = {
+  next: () => Promise<string>;
+  send: (message: string) => void;
   onclose?: () => void;
   close: () => void;
 };
 
-export type Channel = {
-  next: () => Promise<string>;
-  send: (message: string) => void;
-};
-
-export const websocketChannel = (url: string): Promise<Channel & Closeable> => {
+export const websocketChannel = (url: string): Promise<Channel> => {
   const websocket = new WebSocket(url);
-  return new Promise<Channel & Closeable>((resolve, reject) => {
+  return new Promise<Channel>((resolve, reject) => {
     websocket.onerror = (event) => {
       reject(event);
     };
     websocket.onopen = () => {
-      const channel: Channel & Closeable = {
+      const channel: Channel = {
         ...makeChannel(websocket),
         close() {
           websocket.close();
@@ -29,14 +26,29 @@ export const websocketChannel = (url: string): Promise<Channel & Closeable> => {
   });
 };
 
-export const fromRtcDataChannel = (channel: RTCDataChannel): Channel => {
-  return makeChannel(channel);
-};
+export function fromRtcDataChannel(
+  connection: RTCPeerConnection,
+  rtcDataChannel: RTCDataChannel
+): Channel {
+  const channel: Channel = {
+    ...makeChannel(rtcDataChannel),
+    close: () => {
+      connection.close();
+    },
+  };
+  rtcDataChannel.onclose = () => {
+    channel.onclose?.();
+  };
+  return channel;
+}
 
 const makeChannel = (inner: {
   send: (message: string) => void;
   onmessage: ((event: MessageEvent) => any) | null;
-}): Channel => {
+}): {
+  next: () => Promise<string>;
+  send: (message: string) => void;
+} => {
   const bufferedMessages: Array<string> = [];
   const bufferedResolves: Array<(message: string) => void> = [];
 

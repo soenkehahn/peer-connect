@@ -1,11 +1,9 @@
 import { HasColor } from "./signalingClient";
-import { Channel, Closeable, fromRtcDataChannel } from "./utils/channel";
+import { Channel, fromRtcDataChannel } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (
-    signalingChannel: Channel & HasColor
-  ): Promise<Channel & Closeable> => {
+  promote: async (signalingChannel: Channel & HasColor): Promise<Channel> => {
     const connection: RTCPeerConnection = new RTCPeerConnection({});
     connection.onnegotiationneeded = async () => {
       const offer = await connection.createOffer();
@@ -20,38 +18,22 @@ export const webrtcAdapter: WebrtcAdapter = {
     handleSignallingMessages(connection, signalingChannel);
     if (signalingChannel.color === "blue") {
       const rtcDataChannel = connection.createDataChannel("my channel");
-      return new Promise<Channel & Closeable>((resolve) => {
+      return new Promise<Channel>((resolve) => {
         rtcDataChannel.onopen = () => {
-          resolve(toChannel(connection, rtcDataChannel));
+          resolve(fromRtcDataChannel(connection, rtcDataChannel));
         };
       });
     } else {
-      return new Promise<Channel & Closeable>((resolve) => {
+      return new Promise<Channel>((resolve) => {
         connection.ondatachannel = (event) => {
           event.channel.onopen = () => {
-            resolve(toChannel(connection, event.channel));
+            resolve(fromRtcDataChannel(connection, event.channel));
           };
         };
       });
     }
   },
 };
-
-function toChannel(
-  connection: RTCPeerConnection,
-  rtcDataChannel: RTCDataChannel
-): Channel & Closeable {
-  const channel: Channel & Closeable = {
-    ...fromRtcDataChannel(rtcDataChannel),
-    close: () => {
-      connection.close();
-    },
-  };
-  rtcDataChannel.onclose = () => {
-    channel.onclose?.();
-  };
-  return channel;
-}
 
 function handleSignallingMessages(
   connection: RTCPeerConnection,

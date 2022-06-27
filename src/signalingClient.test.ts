@@ -2,7 +2,7 @@ import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
 import { HasColor, connect } from "./signalingClient";
 import { waitFor } from "./utils";
-import { Channel, Closeable } from "./utils/channel";
+import { Channel } from "./utils/channel";
 
 jest.setTimeout(1000);
 
@@ -20,8 +20,8 @@ describe("offer & seek", () => {
     server.close();
   });
 
-  let a: Channel & Closeable & HasColor;
-  let b: Channel & Closeable & HasColor;
+  let a: Channel & HasColor;
+  let b: Channel & HasColor;
   beforeEach(async () => {
     [a, b] = await Promise.all([
       connect({ url, offer: "a", seek: "b" }),

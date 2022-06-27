@@ -1,11 +1,9 @@
 import { HasColor } from "../signalingClient";
-import { Channel, Closeable } from "../utils/channel";
+import { Channel } from "../utils/channel";
 import { WebrtcAdapter } from "../webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (
-    signalingChannel: Channel & HasColor
-  ): Promise<Channel & Closeable> => {
+  promote: async (signalingChannel: Channel & HasColor): Promise<Channel> => {
     return {
       ...signalingChannel,
       close() {

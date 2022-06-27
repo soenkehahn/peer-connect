@@ -1,7 +1,7 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
 import { wait, waitFor } from "./utils";
-import { Channel, Closeable, websocketChannel } from "./utils/channel";
+import { Channel, websocketChannel } from "./utils/channel";
 
 const skipConfirmation = async (client: Channel): Promise<void> => {
   expect(JSON.parse(await client.next())).toMatchObject({ success: true });
@@ -24,8 +24,8 @@ describe("runServer", () => {
   });
 
   describe("when two peers connect", () => {
-    let a: Channel & Closeable;
-    let b: Channel & Closeable;
+    let a: Channel;
+    let b: Channel;
     beforeEach(async () => {
       a = await websocketChannel(`${url}/?offer=a&seek=a`);
       b = await websocketChannel(`${url}/?offer=a&seek=a`);

@@ -1,6 +1,6 @@
 import { webrtcAdapter } from "./webrtcAdapter";
 import { HasColor } from "./signalingClient";
-import { Channel, Closeable } from "./utils/channel";
+import { Channel } from "./utils/channel";
 
 jest.setTimeout(1000);
 
@@ -52,13 +52,16 @@ describe("webrtcAdapter", () => {
     rtcDataChannelMock = null;
   });
 
-  async function setupInitiator(): Promise<Channel & Closeable> {
+  async function setupInitiator(): Promise<Channel> {
     const mockSignalingChannel: Channel & HasColor = {
       next() {
         return new Promise(() => {});
       },
       send() {
         throw "send";
+      },
+      close() {
+        throw "close";
       },
       color: "blue",
     };
@@ -67,13 +70,16 @@ describe("webrtcAdapter", () => {
     return await webrtcChannelPromise;
   }
 
-  async function setupJoiner(): Promise<Channel & Closeable> {
+  async function setupJoiner(): Promise<Channel> {
     const mockSignalingChannel: Channel & HasColor = {
       next() {
         return new Promise(() => {});
       },
       send() {
         throw "send";
+      },
+      close() {
+        throw "close";
       },
       color: "green",
     };
@@ -85,7 +91,7 @@ describe("webrtcAdapter", () => {
     return await webrtcChannelPromise;
   }
 
-  const setups: Array<[string, () => Promise<Channel & Closeable>]> = [
+  const setups: Array<[string, () => Promise<Channel>]> = [
     ["when initiating the rtc data channel", setupInitiator],
     ["when joining the rtc data channel", setupJoiner],
   ];
