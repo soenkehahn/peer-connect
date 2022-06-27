@@ -1,5 +1,4 @@
-import { Channel, websocketChannel } from "./utils/channel";
-export { Channel } from "./utils/channel";
+import { Channel, Closeable, websocketChannel } from "./utils/channel";
 
 export type HasColor = { color: "blue" | "green" };
 
@@ -7,15 +6,19 @@ export const connect = async (args: {
   url: string;
   offer: string;
   seek: string;
-}): Promise<Channel & HasColor> => {
-  let channel = await websocketChannel(
+}): Promise<Channel & Closeable & HasColor> => {
+  type HasColorOptional = {
+    color?: "blue" | "green";
+  };
+  let channel: Channel & Closeable & HasColorOptional = await websocketChannel(
     `${args.url}/?offer=${args.offer}&seek=${args.seek}`
   );
   let confirmation = parseConfirmation(await channel.next());
   if (!confirmation.success) {
     throw new Error("unexpected signaling server message: " + confirmation);
   }
-  return { ...channel, color: confirmation.color };
+  channel.color = confirmation.color;
+  return channel as Channel & Closeable & HasColor;
 };
 
 type Confirmation = { success: boolean } & HasColor;

@@ -1,4 +1,7 @@
-import { Closeable } from "../webrtcClient";
+export type Closeable = {
+  onclose?: () => void;
+  close: () => void;
+};
 
 export type Channel = {
   next: () => Promise<string>;

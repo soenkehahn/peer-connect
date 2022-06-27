@@ -1,8 +1,7 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
 import { wait, waitFor } from "./utils";
-import { Channel, websocketChannel } from "./utils/channel";
-import { Closeable } from "./webrtcClient";
+import { Channel, Closeable, websocketChannel } from "./utils/channel";
 
 const skipConfirmation = async (client: Channel): Promise<void> => {
   expect(JSON.parse(await client.next())).toMatchObject({ success: true });

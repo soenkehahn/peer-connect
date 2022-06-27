@@ -1,5 +1,6 @@
 import { HasColor } from "../signalingClient";
-import { Channel, Closeable, WebrtcAdapter } from "../webrtcClient";
+import { Channel, Closeable } from "../utils/channel";
+import { WebrtcAdapter } from "../webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
   promote: async (

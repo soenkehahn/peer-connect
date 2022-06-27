@@ -1,6 +1,6 @@
 import { webrtcAdapter } from "./webrtcAdapter";
-import { Channel, HasColor } from "./signalingClient";
-import { Closeable } from "./webrtcClient";
+import { HasColor } from "./signalingClient";
+import { Channel, Closeable } from "./utils/channel";
 
 jest.setTimeout(1000);
 

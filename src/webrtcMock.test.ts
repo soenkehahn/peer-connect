@@ -1,6 +1,7 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { Channel, connect } from "./webrtcClient";
+import { Channel } from "./utils/channel";
+import { connect } from "./webrtcClient";
 
 jest.mock("./webrtcAdapter");
 

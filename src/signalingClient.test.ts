@@ -1,6 +1,8 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { Channel, HasColor, connect } from "./signalingClient";
+import { HasColor, connect } from "./signalingClient";
+import { waitFor } from "./utils";
+import { Channel, Closeable } from "./utils/channel";
 
 jest.setTimeout(1000);
 
@@ -18,8 +20,8 @@ describe("offer & seek", () => {
     server.close();
   });
 
-  let a: Channel & HasColor;
-  let b: Channel & HasColor;
+  let a: Channel & Closeable & HasColor;
+  let b: Channel & Closeable & HasColor;
   beforeEach(async () => {
     [a, b] = await Promise.all([
       connect({ url, offer: "a", seek: "b" }),
@@ -48,5 +50,19 @@ describe("offer & seek", () => {
 
   it("marks one peer as blue and the other as green", async () => {
     expect(new Set([a.color, b.color])).toEqual(new Set(["blue", "green"]));
+  });
+
+  it("relays closing to peers", async () => {
+    let bIsClosed = false;
+    b.onclose = () => (bIsClosed = true);
+    a.close();
+    await waitFor(500, () => expect(bIsClosed).toEqual(true));
+  });
+
+  it("relays closing to peers in the other direction", async () => {
+    let aIsClosed = false;
+    a.onclose = () => (aIsClosed = true);
+    b.close();
+    await waitFor(500, () => expect(aIsClosed).toEqual(true));
   });
 });
