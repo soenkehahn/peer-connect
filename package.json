@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "packageManager": "yarn@3.2.1",
   "main": "dist/src/index.js",
+  "targets": {
+    "example": {}
+  },
   "files": [
     "dist/src/**/*"
   ],
@@ -11,7 +14,8 @@
     "e2e": "ts-node ./e2e-tests.ts",
     "serve-example": "ts-node ./serve-example.ts",
     "ci": "yarn install && yarn tsc --noEmit && yarn jest && yarn e2e",
-    "run-signaling-server": "esbuild ./run-signaling-server.ts --bundle --outfile=dist/run-signaling-server.js --platform=node && node dist/run-signaling-server.js"
+    "run-signaling-server": "./run-ts.sh ./run-signaling-server.ts",
+    "bundle-examples": "./run-ts.sh ./bundle-examples.ts"
   },
   "devDependencies": {
     "@types/jest": "^28.1.2",
