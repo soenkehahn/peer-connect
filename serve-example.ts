@@ -8,7 +8,7 @@ console.error(`Running ${exampleFile}`);
 (async () => {
   await runServer({ port: 1233 });
 
-  spawn("parcel", [exampleFile], {
+  spawn("parcel", [exampleFile, "--no-autoinstall"], {
     stdio: "inherit",
   });
 })();
