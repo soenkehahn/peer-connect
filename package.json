@@ -11,7 +11,7 @@
     "e2e": "ts-node ./e2e-tests.ts",
     "serve-example": "ts-node ./serve-example.ts",
     "ci": "yarn install && yarn tsc --noEmit && yarn jest && yarn e2e",
-    "run-signaling-server": "ts-node ./run-signaling-server.ts"
+    "run-signaling-server": "esbuild ./run-signaling-server.ts --bundle --outfile=dist/run-signaling-server.js --platform=node && node dist/run-signaling-server.js"
   },
   "devDependencies": {
     "@types/jest": "^28.1.2",
@@ -20,6 +20,7 @@
     "@types/uuid": "^8",
     "@types/ws": "^8",
     "cypress": "^10.1.0",
+    "esbuild": "^0.14.47",
     "jest": "^28.1.1",
     "jest-environment-jsdom": "^28.1.1",
     "parcel": "^2.6.1",
