@@ -4,7 +4,7 @@
   "packageManager": "yarn@3.2.1",
   "main": "dist/src/index.js",
   "files": [
-    "dist/src"
+    "dist/src/**/*"
   ],
   "scripts": {
     "prepack": "jest && rm -rf dist && tsc",
