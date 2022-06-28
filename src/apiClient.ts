@@ -5,6 +5,7 @@ export type ToPeer<T extends Api> = ToServer<T> & { close: () => void };
 
 export const connect = async <Offer extends Api, Seek extends Api>(args: {
   signalingServer: string;
+  rtcConfiguration?: RTCConfiguration;
   offer: Offer;
   server: ToPeer<Offer>;
   seek: Seek;
@@ -13,6 +14,7 @@ export const connect = async <Offer extends Api, Seek extends Api>(args: {
   const seekString = JSON.stringify(args.seek);
   const channel = await webrtcConnect({
     signalingServer: args.signalingServer,
+    rtcConfiguration: args.rtcConfiguration,
     offer: offerString,
     seek: seekString,
   });

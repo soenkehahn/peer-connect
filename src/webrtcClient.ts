@@ -3,11 +3,15 @@ import { Channel } from "./utils/channel";
 import { webrtcAdapter } from "./webrtcAdapter";
 
 export type WebrtcAdapter = {
-  promote: (channel: Channel & HasColor) => Promise<Channel>;
+  promote: (
+    channel: Channel & HasColor,
+    rtcConfiguration?: RTCConfiguration
+  ) => Promise<Channel>;
 };
 
 export const connect = async (args: {
   signalingServer: string;
+  rtcConfiguration?: RTCConfiguration;
   offer: string;
   seek: string;
 }): Promise<Channel> => {
@@ -16,5 +20,5 @@ export const connect = async (args: {
     offer: args.offer,
     seek: args.seek,
   });
-  return await webrtcAdapter.promote(signalingChannel);
+  return await webrtcAdapter.promote(signalingChannel, args.rtcConfiguration);
 };

@@ -3,8 +3,12 @@ import { Channel, fromRtcDataChannel } from "./utils/channel";
 import { WebrtcAdapter } from "./webrtcClient";
 
 export const webrtcAdapter: WebrtcAdapter = {
-  promote: async (signalingChannel: Channel & HasColor): Promise<Channel> => {
-    const connection: RTCPeerConnection = new RTCPeerConnection({});
+  promote: async (
+    signalingChannel: Channel & HasColor,
+    rtcConfiguration?: RTCConfiguration
+  ): Promise<Channel> => {
+    const config: RTCConfiguration = rtcConfiguration || {};
+    const connection: RTCPeerConnection = new RTCPeerConnection(config);
     connection.onnegotiationneeded = async () => {
       const offer = await connection.createOffer();
       await connection.setLocalDescription(offer);
