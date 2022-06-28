@@ -12,11 +12,13 @@ export type WebrtcAdapter = {
 export const connect = async (args: {
   signalingServer: string;
   rtcConfiguration?: RTCConfiguration;
+  id: string;
   offer: string;
   seek: string;
 }): Promise<Channel> => {
   const signalingChannel = await signalingConnect({
     url: args.signalingServer,
+    id: args.id,
     offer: args.offer,
     seek: args.seek,
   });

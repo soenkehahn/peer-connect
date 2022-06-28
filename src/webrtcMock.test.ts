@@ -25,8 +25,8 @@ describe("offer & seek", () => {
   let b: Channel;
   beforeEach(async () => {
     [a, b] = await Promise.all([
-      connect({ signalingServer: url, offer: "a", seek: "b" }),
-      connect({ signalingServer: url, offer: "b", seek: "a" }),
+      connect({ signalingServer: url, id: "a", offer: "a", seek: "b" }),
+      connect({ signalingServer: url, id: "b", offer: "b", seek: "a" }),
     ]);
   });
 

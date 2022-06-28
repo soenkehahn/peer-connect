@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import * as uuid from "uuid";
 import * as ReactDOM from "react-dom/client";
 import { connect, ToPeer } from "../src/apiClient";
 
@@ -16,6 +17,8 @@ type ChatApi = {
   };
 };
 
+const id = uuid.v4();
+
 const App = () => {
   const [peer, setPeer] = useState<ToPeer<ChatApi> | null>(null);
   const [messages, setMessages] = useState<{ inner: Array<string> }>({
@@ -24,6 +27,7 @@ const App = () => {
   useEffect(() => {
     connect({
       signalingServer: "ws://localhost:1233",
+      id,
       offer: chatApi,
       server: {
         sendMessage: (message: string) => {

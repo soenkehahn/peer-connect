@@ -8,6 +8,8 @@ import {
 
 type PeerDescription = { offer: string; seek: string };
 
+type Client = { id: string; socket: WebSocket };
+
 export const runServer = ({
   port,
   verbose = true,
@@ -15,7 +17,7 @@ export const runServer = ({
   port: number;
   verbose?: boolean;
 }): Promise<WebSocketServer> => {
-  const waiting: QueuedMap<PeerDescription, WebSocket> = newQueuedMap();
+  const waiting: QueuedMap<PeerDescription, Client> = newQueuedMap();
   const server = new WebSocketServer({ port });
   server.addListener("connection", (newPeer: WebSocket, request) => {
     if (request.url) {
@@ -43,19 +45,23 @@ export const runServer = ({
 };
 
 const handleNewPeer = (
-  waiting: QueuedMap<PeerDescription, WebSocket>,
+  waiting: QueuedMap<PeerDescription, Client>,
   url: URL,
   newPeer: WebSocket
 ) => {
-  const newPeerDescription = getParams(url);
-  const match = popMatch(waiting, {
-    offer: newPeerDescription.seek,
-    seek: newPeerDescription.offer,
-  });
+  const { id: newPeerId, description: newPeerDescription } = getParams(url);
+  const match = popMatch(
+    waiting,
+    {
+      offer: newPeerDescription.seek,
+      seek: newPeerDescription.offer,
+    },
+    ({ id }) => id !== newPeerId
+  );
   if (match) {
-    connectPeers(newPeer, match);
+    connectPeers(newPeer, match.socket);
   } else {
-    pushMatch(waiting, newPeerDescription, newPeer);
+    pushMatch(waiting, newPeerDescription, { id: newPeerId, socket: newPeer });
     newPeer.onmessage = () => {
       newPeer.send(
         JSON.stringify({
@@ -67,16 +73,20 @@ const handleNewPeer = (
   }
 };
 
-const getParams = (url: URL): { offer: string; seek: string } => {
+const getParams = (url: URL): { id: string; description: PeerDescription } => {
+  const id = url.searchParams.get("id");
+  if (!id) {
+    throw new Error("id not given");
+  }
   const offer = url.searchParams.get("offer");
-  const seek = url.searchParams.get("seek");
   if (!offer) {
     throw new Error("offer not given");
   }
+  const seek = url.searchParams.get("seek");
   if (!seek) {
     throw new Error("seek not given");
   }
-  return { offer, seek };
+  return { id, description: { offer, seek } };
 };
 
 const connectPeers = (a: WebSocket, b: WebSocket) => {

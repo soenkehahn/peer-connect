@@ -24,8 +24,8 @@ describe("offer & seek", () => {
   let b: Channel & HasColor;
   beforeEach(async () => {
     [a, b] = await Promise.all([
-      connect({ url, offer: "a", seek: "b" }),
-      connect({ url, offer: "b", seek: "a" }),
+      connect({ url, id: "a", offer: "a", seek: "b" }),
+      connect({ url, id: "b", offer: "b", seek: "a" }),
     ]);
   });
 

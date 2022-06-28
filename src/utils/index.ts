@@ -17,3 +17,13 @@ export const waitFor = async (millis: number, test: () => void) => {
     break;
   }
 };
+
+export const expectToHang = async (
+  millis: number,
+  promises: Array<Promise<unknown>>
+): Promise<void> => {
+  const unique = Math.random();
+  expect(
+    await Promise.race([wait(millis).then(() => unique), ...promises])
+  ).toEqual(unique);
+};

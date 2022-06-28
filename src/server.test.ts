@@ -1,6 +1,6 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { wait, waitFor } from "./utils";
+import { expectToHang, waitFor } from "./utils";
 import { Channel, websocketChannel } from "./utils/channel";
 
 const skipConfirmation = async (client: Channel): Promise<void> => {
@@ -29,8 +29,8 @@ describe("runServer", () => {
     let a: Channel;
     let b: Channel;
     beforeEach(async () => {
-      a = await websocketChannel(`${url}/?offer=a&seek=a`);
-      b = await websocketChannel(`${url}/?offer=a&seek=a`);
+      a = await websocketChannel(`${url}/?id=a&offer=a&seek=a`);
+      b = await websocketChannel(`${url}/?id=b&offer=a&seek=a`);
       await skipConfirmation(a);
       await skipConfirmation(b);
     });
@@ -75,13 +75,13 @@ describe("runServer", () => {
   });
 
   it("allows to offer and seek things by string", async () => {
-    const a = await websocketChannel(`${url}?offer=a&seek=b`);
-    const b = await websocketChannel(`${url}?offer=b&seek=a`);
+    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
+    const b = await websocketChannel(`${url}?id=b&offer=b&seek=a`);
     await skipConfirmation(a);
     await skipConfirmation(b);
 
-    const x = await websocketChannel(`${url}?offer=x&seek=y`);
-    const y = await websocketChannel(`${url}?offer=y&seek=x`);
+    const x = await websocketChannel(`${url}?id=x&offer=x&seek=y`);
+    const y = await websocketChannel(`${url}?id=y&offer=y&seek=x`);
     await skipConfirmation(x);
     await skipConfirmation(y);
 
@@ -93,7 +93,7 @@ describe("runServer", () => {
   });
 
   it("sends an error if messages get sent before the confirmation is received", async () => {
-    const a = await websocketChannel(`${url}?offer=a&seek=b`);
+    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
     a.send("foo");
     expect(await a.next()).toEqual(
       JSON.stringify({
@@ -103,18 +103,21 @@ describe("runServer", () => {
   });
 
   it("doesn't connect if b's offer doesn't match", async () => {
-    const a = await websocketChannel(`${url}?offer=a&seek=b`);
-    const b = await websocketChannel(`${url}?offer=foo&seek=a`);
-    expect(await Promise.race([wait(200), a.next(), b.next()])).toEqual(
-      undefined
-    );
+    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
+    const b = await websocketChannel(`${url}?id=b&offer=foo&seek=a`);
+    await expectToHang(200, [a.next(), b.next()]);
   });
 
   it("doesn't connect if a's offer doesn't match", async () => {
-    const a = await websocketChannel(`${url}?offer=foo&seek=b`);
-    const b = await websocketChannel(`${url}?offer=b&seek=a`);
-    expect(await Promise.race([wait(200), a.next(), b.next()])).toEqual(
-      undefined
-    );
+    const a = await websocketChannel(`${url}?id=a&offer=foo&seek=b`);
+    const b = await websocketChannel(`${url}?id=b&offer=b&seek=a`);
+    await expectToHang(200, [a.next(), b.next()]);
+  });
+
+  it("doesn't let peers connect to themselves", async () => {
+    const id = "test-id";
+    const a = await websocketChannel(`${url}?id=${id}&offer=foo&seek=foo`);
+    const b = await websocketChannel(`${url}?id=${id}&offer=foo&seek=foo`);
+    await expectToHang(200, [a.next(), b.next()]);
   });
 });

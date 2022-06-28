@@ -44,12 +44,14 @@ describe("apiClient", () => {
     const [a, b] = await Promise.all([
       connect({
         signalingServer: url,
+        id: "a",
         offer: MyApi,
         server: aServer,
         seek: MyApi,
       }),
       connect({
         signalingServer: url,
+        id: "b",
         offer: MyApi,
         server: bServer,
         seek: MyApi,
@@ -111,12 +113,14 @@ describe("apiClient", () => {
     const [a, b] = await Promise.all([
       connect({
         signalingServer: url,
+        id: "a",
         offer: myApi,
         server: aServer,
         seek: myApi,
       }),
       connect({
         signalingServer: url,
+        id: "b",
         offer: myApi,
         server: bServer,
         seek: myApi,
@@ -181,12 +185,14 @@ describe("apiClient", () => {
     const [a, b] = await Promise.all([
       connect({
         signalingServer: url,
+        id: "a",
         offer: aApi,
         server: aServer,
         seek: bApi,
       }),
       connect({
         signalingServer: url,
+        id: "b",
         offer: bApi,
         server: bServer,
         seek: aApi,
@@ -223,12 +229,14 @@ describe("apiClient", () => {
     const [a, _b] = await Promise.all([
       connect({
         signalingServer: url,
+        id: "a",
         offer: aApi,
         server: aServer,
         seek: bApi,
       }),
       connect({
         signalingServer: url,
+        id: "b",
         offer: bApi,
         server: bServer,
         seek: aApi,
@@ -254,12 +262,14 @@ describe("apiClient", () => {
       const [a, _b] = await Promise.all([
         connect({
           signalingServer: url,
+          id: "a",
           offer: aApi,
           server: aServer,
           seek: bApi,
         }),
         connect({
           signalingServer: url,
+          id: "b",
           offer: bApi,
           server: bServer,
           seek: aApi,
@@ -290,12 +300,14 @@ describe("apiClient", () => {
       const [a, _b] = await Promise.all([
         connect({
           signalingServer: url,
+          id: "b",
           offer: bApi,
           server: bServer,
           seek: aApi,
         }),
         connect({
           signalingServer: url,
+          id: "a",
           offer: aApi,
           server: aServer,
           seek: bApi,

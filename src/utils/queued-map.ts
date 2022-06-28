@@ -23,12 +23,18 @@ export const pushMatch = <Key extends Data, Value>(
 
 export const popMatch = <Key extends Data, Value>(
   matches: QueuedMap<Key, Value>,
-  key: Key
+  key: Key,
+  filter?: (value: Value) => boolean
 ): null | Value => {
   const jsonKey = JSON.stringify(key);
   const array = matches.get(jsonKey);
   if (array) {
-    const result = array.pop() as Value;
+    const index = array.findIndex(filter || (() => true));
+    if (index == null) {
+      return null;
+    }
+    const result = array[index];
+    array.splice(index, 1);
     if (array.length === 0) {
       matches.delete(jsonKey);
     }

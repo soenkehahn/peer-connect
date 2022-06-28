@@ -35,6 +35,7 @@ const HelloWorldPeer = (props: { signalingServer: string; name: string }) => {
   useEffect(() => {
     connect({
       signalingServer: props.signalingServer,
+      id: props.name,
       offer: pingApi,
       server: {
         ping: (message: string) => {

@@ -4,6 +4,7 @@ export type HasColor = { color: "blue" | "green" };
 
 export const connect = async (args: {
   url: string;
+  id: string;
   offer: string;
   seek: string;
 }): Promise<Channel & HasColor> => {
@@ -11,7 +12,7 @@ export const connect = async (args: {
     color?: "blue" | "green";
   };
   let channel: Channel & HasColorOptional = await websocketChannel(
-    `${args.url}/?offer=${args.offer}&seek=${args.seek}`
+    `${args.url}/?id=${args.id}&offer=${args.offer}&seek=${args.seek}`
   );
   let json = await channel.next();
   if (json === null) {
