@@ -30,7 +30,7 @@ export const popMatch = <Key extends Data, Value>(
   const array = matches.get(jsonKey);
   if (array) {
     const index = array.findIndex(filter || (() => true));
-    if (index == null) {
+    if (index === -1) {
       return null;
     }
     const result = array[index];

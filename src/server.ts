@@ -13,7 +13,7 @@ type PeerDescription = {
 
 type Client = {
   id: string;
-  disallow: null | string;
+  disallow: Array<string>;
   socket: WebSocket;
 };
 
@@ -59,8 +59,8 @@ const handleNewPeer = (
   const newPeer = getParams(url);
   const filter = (other: Client): boolean =>
     other.id !== newPeer.id &&
-    newPeer.disallow !== other.id &&
-    other.disallow !== newPeer.id;
+    !newPeer.disallow.includes(other.id) &&
+    !other.disallow.includes(newPeer.id);
   const match = popMatch(
     waiting,
     {
@@ -90,12 +90,12 @@ const handleNewPeer = (
 
 const getParams = (
   url: URL
-): { id: string; disallow: null | string; description: PeerDescription } => {
+): { id: string; disallow: Array<string>; description: PeerDescription } => {
   const id = url.searchParams.get("id");
   if (!id) {
     throw new Error("id not given");
   }
-  const disallow = url.searchParams.get("disallow");
+  const disallow = url.searchParams.getAll("disallow");
   const offer = url.searchParams.get("offer");
   if (!offer) {
     throw new Error("offer not given");

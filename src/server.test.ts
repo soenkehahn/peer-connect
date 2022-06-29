@@ -162,5 +162,23 @@ describe("runServer", () => {
     await expectToHang(200, [peer.next(), other.next()]);
   });
 
-  it.todo("allows to disallow multiple ids");
+  it("allows to disallow multiple ids", async () => {
+    const peer = await openSocket({
+      id: "peer",
+      disallow: ["a", "b"],
+      offer: "peerOffer",
+      seek: "otherOffer",
+    });
+    const a = await openSocket({
+      id: "a",
+      offer: "otherOffer",
+      seek: "peerOffer",
+    });
+    const b = await openSocket({
+      id: "b",
+      offer: "otherOffer",
+      seek: "peerOffer",
+    });
+    await expectToHang(200, [peer.next(), a.next(), b.next()]);
+  });
 });
