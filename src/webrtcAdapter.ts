@@ -31,6 +31,7 @@ export const webrtcAdapter: WebrtcAdapter = {
       const rtcDataChannel = connection.createDataChannel("my channel");
       return new Promise<Channel>((resolve) => {
         rtcDataChannel.onopen = () => {
+          signalingChannel.close();
           rtcDataChannel.addEventListener("close", () => {
             connection.close();
           });
@@ -41,6 +42,7 @@ export const webrtcAdapter: WebrtcAdapter = {
       return new Promise<Channel>((resolve) => {
         connection.ondatachannel = (event) => {
           event.channel.onopen = () => {
+            signalingChannel.close();
             event.channel.addEventListener("close", () => {
               connection.close();
             });
@@ -61,7 +63,7 @@ function handleSignallingMessages(
       while (true) {
         const json = await signalingChannel.next();
         if (json === null) {
-          throw new Error("expected signaling messages");
+          break;
         }
         const message = JSON.parse(json);
         if (message.desc) {

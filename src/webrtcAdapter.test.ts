@@ -65,6 +65,11 @@ describe("webrtcAdapter", () => {
     rtcDataChannelMock = null;
   });
 
+  let signalingChannelIsClosed: boolean;
+  beforeEach(() => {
+    signalingChannelIsClosed = false;
+  });
+
   async function setupInitiator(): Promise<Channel> {
     const mockSignalingChannel: Channel & HasColor = {
       next() {
@@ -74,7 +79,7 @@ describe("webrtcAdapter", () => {
         throw "send";
       },
       close() {
-        throw "close";
+        signalingChannelIsClosed = true;
       },
       color: "blue",
     };
@@ -92,7 +97,7 @@ describe("webrtcAdapter", () => {
         throw "send";
       },
       close() {
-        throw "close";
+        signalingChannelIsClosed = true;
       },
       color: "green",
     };
@@ -122,6 +127,11 @@ describe("webrtcAdapter", () => {
         const messagePromise = webrtcChannel.next();
         rtcDataChannelMock?.onmessage?.({ data: "foo" });
         expect(await messagePromise).toEqual("foo");
+      });
+
+      it("closes the signaling channel once the webrtc connection is established", async () => {
+        await setupWebrtcChannel();
+        expect(signalingChannelIsClosed).toEqual(true);
       });
 
       it("calls onclose when the data channel is closed from the other side", async () => {
