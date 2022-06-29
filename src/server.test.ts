@@ -14,11 +14,30 @@ jest.setTimeout(1000);
 describe("runServer", () => {
   let server: WebSocketServer;
   let url: string;
+  let openSocket: (params: {
+    id: string;
+    disallow?: string | Array<string>;
+    offer: string;
+    seek: string;
+  }) => Promise<Channel>;
 
   beforeEach(async () => {
     server = await runServer({ port: 0, verbose: false });
     const port = (server.address() as AddressInfo).port;
     url = `ws://localhost:${port}`;
+    openSocket = (params) => {
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        if (Array.isArray(value)) {
+          for (const v of value) {
+            searchParams.append(key, v);
+          }
+        } else {
+          searchParams.append(key, value);
+        }
+      }
+      return websocketChannel(`${url}/?${searchParams.toString()}`);
+    };
   });
 
   afterEach(() => {
@@ -29,8 +48,8 @@ describe("runServer", () => {
     let a: Channel;
     let b: Channel;
     beforeEach(async () => {
-      a = await websocketChannel(`${url}/?id=a&offer=a&seek=a`);
-      b = await websocketChannel(`${url}/?id=b&offer=a&seek=a`);
+      a = await openSocket({ id: "a", offer: "a", seek: "a" });
+      b = await openSocket({ id: "b", offer: "a", seek: "a" });
       await skipConfirmation(a);
       await skipConfirmation(b);
     });
@@ -75,13 +94,13 @@ describe("runServer", () => {
   });
 
   it("allows to offer and seek things by string", async () => {
-    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
-    const b = await websocketChannel(`${url}?id=b&offer=b&seek=a`);
+    const a = await openSocket({ id: "a", offer: "a", seek: "b" });
+    const b = await openSocket({ id: "b", offer: "b", seek: "a" });
     await skipConfirmation(a);
     await skipConfirmation(b);
 
-    const x = await websocketChannel(`${url}?id=x&offer=x&seek=y`);
-    const y = await websocketChannel(`${url}?id=y&offer=y&seek=x`);
+    const x = await openSocket({ id: "x", offer: "x", seek: "y" });
+    const y = await openSocket({ id: "y", offer: "y", seek: "x" });
     await skipConfirmation(x);
     await skipConfirmation(y);
 
@@ -93,7 +112,7 @@ describe("runServer", () => {
   });
 
   it("sends an error if messages get sent before the confirmation is received", async () => {
-    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
+    const a = await openSocket({ id: "a", offer: "a", seek: "b" });
     a.send("foo");
     expect(await a.next()).toEqual(
       JSON.stringify({
@@ -103,37 +122,43 @@ describe("runServer", () => {
   });
 
   it("doesn't connect if b's offer doesn't match", async () => {
-    const a = await websocketChannel(`${url}?id=a&offer=a&seek=b`);
-    const b = await websocketChannel(`${url}?id=b&offer=foo&seek=a`);
+    const a = await openSocket({ id: "a", offer: "a", seek: "b" });
+    const b = await openSocket({ id: "b", offer: "foo", seek: "a" });
     await expectToHang(200, [a.next(), b.next()]);
   });
 
   it("doesn't connect if a's offer doesn't match", async () => {
-    const a = await websocketChannel(`${url}?id=a&offer=foo&seek=b`);
-    const b = await websocketChannel(`${url}?id=b&offer=b&seek=a`);
+    const a = await openSocket({ id: "a", offer: "foo", seek: "b" });
+    const b = await openSocket({ id: "b", offer: "b", seek: "a" });
     await expectToHang(200, [a.next(), b.next()]);
   });
 
   it("doesn't let peers connect to themselves", async () => {
     const id = "test-id";
-    const a = await websocketChannel(`${url}?id=${id}&offer=foo&seek=foo`);
-    const b = await websocketChannel(`${url}?id=${id}&offer=foo&seek=foo`);
+    const a = await openSocket({ id, offer: "foo", seek: "foo" });
+    const b = await openSocket({ id, offer: "foo", seek: "foo" });
     await expectToHang(200, [a.next(), b.next()]);
   });
 
   it("allows to disallow other ids (disallow on first request)", async () => {
-    const peer = await websocketChannel(
-      `${url}?id=peer&disallow=other&offer=foo&seek=foo`
-    );
-    const other = await websocketChannel(`${url}?id=other&offer=foo&seek=foo`);
+    const peer = await openSocket({
+      id: "peer",
+      disallow: "other",
+      offer: "foo",
+      seek: "foo",
+    });
+    const other = await openSocket({ id: "other", offer: "foo", seek: "foo" });
     await expectToHang(200, [peer.next(), other.next()]);
   });
 
   it("allows to disallow other ids (disallow on second request)", async () => {
-    const other = await websocketChannel(`${url}?id=other&offer=foo&seek=foo`);
-    const peer = await websocketChannel(
-      `${url}?id=peer&disallow=other&offer=foo&seek=foo`
-    );
+    const other = await openSocket({ id: "other", offer: "foo", seek: "foo" });
+    const peer = await openSocket({
+      id: "peer",
+      disallow: "other",
+      offer: "foo",
+      seek: "foo",
+    });
     await expectToHang(200, [peer.next(), other.next()]);
   });
 
