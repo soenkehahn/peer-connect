@@ -23,7 +23,11 @@ export const expectToHang = async (
   promises: Array<Promise<unknown>>
 ): Promise<void> => {
   const unique = Math.random();
-  expect(
-    await Promise.race([wait(millis).then(() => unique), ...promises])
-  ).toEqual(unique);
+  const result = await Promise.race([
+    wait(millis).then(() => unique),
+    ...promises,
+  ]);
+  if (result !== unique) {
+    throw new Error(`expectToHang: Promise resolved to: ${result}`);
+  }
 };

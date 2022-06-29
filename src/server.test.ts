@@ -120,4 +120,22 @@ describe("runServer", () => {
     const b = await websocketChannel(`${url}?id=${id}&offer=foo&seek=foo`);
     await expectToHang(200, [a.next(), b.next()]);
   });
+
+  it("allows to disallow other ids (disallow on first request)", async () => {
+    const peer = await websocketChannel(
+      `${url}?id=peer&disallow=other&offer=foo&seek=foo`
+    );
+    const other = await websocketChannel(`${url}?id=other&offer=foo&seek=foo`);
+    await expectToHang(200, [peer.next(), other.next()]);
+  });
+
+  it("allows to disallow other ids (disallow on second request)", async () => {
+    const other = await websocketChannel(`${url}?id=other&offer=foo&seek=foo`);
+    const peer = await websocketChannel(
+      `${url}?id=peer&disallow=other&offer=foo&seek=foo`
+    );
+    await expectToHang(200, [peer.next(), other.next()]);
+  });
+
+  it.todo("allows to disallow multiple ids");
 });

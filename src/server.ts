@@ -6,9 +6,16 @@ import {
   QueuedMap,
 } from "./utils/queued-map";
 
-type PeerDescription = { offer: string; seek: string };
+type PeerDescription = {
+  offer: string;
+  seek: string;
+};
 
-type Client = { id: string; socket: WebSocket };
+type Client = {
+  id: string;
+  disallow: null | string;
+  socket: WebSocket;
+};
 
 export const runServer = ({
   port,
@@ -47,23 +54,31 @@ export const runServer = ({
 const handleNewPeer = (
   waiting: QueuedMap<PeerDescription, Client>,
   url: URL,
-  newPeer: WebSocket
+  newPeerWebsocket: WebSocket
 ) => {
-  const { id: newPeerId, description: newPeerDescription } = getParams(url);
+  const newPeer = getParams(url);
+  const filter = (other: Client): boolean =>
+    other.id !== newPeer.id &&
+    newPeer.disallow !== other.id &&
+    other.disallow !== newPeer.id;
   const match = popMatch(
     waiting,
     {
-      offer: newPeerDescription.seek,
-      seek: newPeerDescription.offer,
+      offer: newPeer.description.seek,
+      seek: newPeer.description.offer,
     },
-    ({ id }) => id !== newPeerId
+    filter
   );
   if (match) {
-    connectPeers(newPeer, match.socket);
+    connectPeers(newPeerWebsocket, match.socket);
   } else {
-    pushMatch(waiting, newPeerDescription, { id: newPeerId, socket: newPeer });
-    newPeer.onmessage = () => {
-      newPeer.send(
+    pushMatch(waiting, newPeer.description, {
+      id: newPeer.id,
+      disallow: newPeer.disallow,
+      socket: newPeerWebsocket,
+    });
+    newPeerWebsocket.onmessage = () => {
+      newPeerWebsocket.send(
         JSON.stringify({
           error:
             "not connected to a peer yet, please await confirmation message",
@@ -73,11 +88,14 @@ const handleNewPeer = (
   }
 };
 
-const getParams = (url: URL): { id: string; description: PeerDescription } => {
+const getParams = (
+  url: URL
+): { id: string; disallow: null | string; description: PeerDescription } => {
   const id = url.searchParams.get("id");
   if (!id) {
     throw new Error("id not given");
   }
+  const disallow = url.searchParams.get("disallow");
   const offer = url.searchParams.get("offer");
   if (!offer) {
     throw new Error("offer not given");
@@ -86,7 +104,7 @@ const getParams = (url: URL): { id: string; description: PeerDescription } => {
   if (!seek) {
     throw new Error("seek not given");
   }
-  return { id, description: { offer, seek } };
+  return { id, disallow, description: { offer, seek } };
 };
 
 const connectPeers = (a: WebSocket, b: WebSocket) => {
