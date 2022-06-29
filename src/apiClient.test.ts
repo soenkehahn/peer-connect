@@ -1,6 +1,6 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "./server";
-import { waitFor } from "./utils";
+import { expectToHang, waitFor } from "./utils";
 import { connect, ToPeer } from "./apiClient";
 
 jest.mock("./webrtcAdapter");
@@ -244,6 +244,33 @@ describe("apiClient", () => {
     ]);
     const results = await Promise.all([1, 2, 3, 4, 5].map((i) => a.double(i)));
     expect(results).toEqual([2, 4, 6, 8, 10]);
+  });
+
+  it("allows to disallow other ids", async () => {
+    const api = { disallowApi: { input: null, output: null } };
+    const server = (): ToPeer<typeof api> => ({
+      disallowApi(_) {
+        return null;
+      },
+      close() {},
+    });
+    await expectToHang(500, [
+      connect({
+        signalingServer: url,
+        id: "a",
+        disallow: ["b"],
+        offer: api,
+        server: server(),
+        seek: api,
+      }),
+      connect({
+        signalingServer: url,
+        id: "b",
+        offer: api,
+        server: server(),
+        seek: api,
+      }),
+    ]);
   });
 
   describe("closing", () => {

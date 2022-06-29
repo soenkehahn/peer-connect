@@ -9,18 +9,27 @@ export type WebrtcAdapter = {
   ) => Promise<Channel>;
 };
 
-export const connect = async (args: {
+export const connect = async ({
+  signalingServer,
+  rtcConfiguration,
+  id,
+  disallow,
+  offer,
+  seek,
+}: {
   signalingServer: string;
   rtcConfiguration?: RTCConfiguration;
   id: string;
+  disallow: Array<string>;
   offer: string;
   seek: string;
 }): Promise<Channel> => {
   const signalingChannel = await signalingConnect({
-    url: args.signalingServer,
-    id: args.id,
-    offer: args.offer,
-    seek: args.seek,
+    url: signalingServer,
+    id,
+    disallow,
+    offer,
+    seek,
   });
-  return await webrtcAdapter.promote(signalingChannel, args.rtcConfiguration);
+  return await webrtcAdapter.promote(signalingChannel, rtcConfiguration);
 };

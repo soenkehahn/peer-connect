@@ -7,6 +7,7 @@ export const connect = async <Offer extends Api, Seek extends Api>(args: {
   signalingServer: string;
   rtcConfiguration?: RTCConfiguration;
   id: string;
+  disallow?: Array<string>;
   offer: Offer;
   server: ToPeer<Offer>;
   seek: Seek;
@@ -17,6 +18,7 @@ export const connect = async <Offer extends Api, Seek extends Api>(args: {
     signalingServer: args.signalingServer,
     rtcConfiguration: args.rtcConfiguration,
     id: args.id,
+    disallow: args.disallow || [],
     offer: offerString,
     seek: seekString,
   });

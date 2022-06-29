@@ -2,17 +2,28 @@ import { Channel, websocketChannel } from "./utils/channel";
 
 export type HasColor = { color: "blue" | "green" };
 
-export const connect = async (args: {
+export const connect = async ({
+  url,
+  id,
+  disallow,
+  offer,
+  seek,
+}: {
   url: string;
   id: string;
+  disallow: Array<string>;
   offer: string;
   seek: string;
 }): Promise<Channel & HasColor> => {
   type HasColorOptional = {
     color?: "blue" | "green";
   };
+  let urlWithParams = `${url}/?id=${id}&offer=${offer}&seek=${seek}`;
+  for (const id of disallow) {
+    urlWithParams += `&disallow=${id}`;
+  }
   let channel: Channel & HasColorOptional = await websocketChannel(
-    `${args.url}/?id=${args.id}&offer=${args.offer}&seek=${args.seek}`
+    urlWithParams
   );
   let json = await channel.next();
   if (json === null) {

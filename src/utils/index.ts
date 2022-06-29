@@ -28,6 +28,8 @@ export const expectToHang = async (
     ...promises,
   ]);
   if (result !== unique) {
-    throw new Error(`expectToHang: Promise resolved to: ${result}`);
+    throw new Error(
+      `expectToHang: Promise resolved to: ${JSON.stringify(result)}`
+    );
   }
 };
