@@ -5,6 +5,30 @@ import { Channel } from "./utils/channel";
 jest.setTimeout(1000);
 
 describe("webrtcAdapter", () => {
+  let signalingMock: {
+    channel: Channel & HasColor;
+    isClosed: boolean;
+    sends: Array<string>;
+  };
+  beforeEach(() => {
+    signalingMock = {
+      channel: {
+        next(): Promise<string> {
+          return new Promise(() => {});
+        },
+        send(message: string) {
+          signalingMock.sends.push(message);
+        },
+        close() {
+          signalingMock.isClosed = true;
+        },
+        color: "blue" as const,
+      },
+      isClosed: false,
+      sends: [],
+    };
+  });
+
   class RTCPeerConnectionMock {
     constructor() {
       if (rtcPeerConnectionMock !== null) {
@@ -24,6 +48,7 @@ describe("webrtcAdapter", () => {
 
     addEventListener() {}
     ondatachannel?: (event: { channel: RTCDataChannelMock }) => void;
+    onicecandidate?: (event: { candidate: unknown }) => void;
   }
 
   class RTCDataChannelMock {
@@ -65,43 +90,14 @@ describe("webrtcAdapter", () => {
     rtcDataChannelMock = null;
   });
 
-  let signalingChannelIsClosed: boolean;
-  beforeEach(() => {
-    signalingChannelIsClosed = false;
-  });
-
   async function setupInitiator(): Promise<Channel> {
-    const mockSignalingChannel: Channel & HasColor = {
-      next() {
-        return new Promise(() => {});
-      },
-      send() {
-        throw "send";
-      },
-      close() {
-        signalingChannelIsClosed = true;
-      },
-      color: "blue",
-    };
-    const webrtcChannelPromise = webrtcAdapter.promote(mockSignalingChannel);
+    const webrtcChannelPromise = webrtcAdapter.promote(signalingMock.channel);
     rtcDataChannelMock?.onopen?.();
     return await webrtcChannelPromise;
   }
 
   async function setupJoiner(): Promise<Channel> {
-    const mockSignalingChannel: Channel & HasColor = {
-      next() {
-        return new Promise(() => {});
-      },
-      send() {
-        throw "send";
-      },
-      close() {
-        signalingChannelIsClosed = true;
-      },
-      color: "green",
-    };
-    const webrtcChannelPromise = webrtcAdapter.promote(mockSignalingChannel);
+    const webrtcChannelPromise = webrtcAdapter.promote(signalingMock.channel);
     rtcPeerConnectionMock?.ondatachannel?.({
       channel: new RTCDataChannelMock(),
     });
@@ -130,8 +126,15 @@ describe("webrtcAdapter", () => {
       });
 
       it("closes the signaling channel once the webrtc connection is established", async () => {
+        expect(signalingMock.isClosed).toEqual(false);
         await setupWebrtcChannel();
-        expect(signalingChannelIsClosed).toEqual(true);
+        expect(signalingMock.isClosed).toEqual(true);
+      });
+
+      it("stops trying to send ice candidates after the data channel is established", async () => {
+        await setupWebrtcChannel();
+        rtcPeerConnectionMock?.onicecandidate?.({ candidate: null });
+        expect(signalingMock.sends).toEqual([]);
       });
 
       it("calls onclose when the data channel is closed from the other side", async () => {

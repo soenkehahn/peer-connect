@@ -7,6 +7,7 @@ export const webrtcAdapter: WebrtcAdapter = {
     signalingChannel: Channel & HasColor,
     rtcConfiguration?: RTCConfiguration
   ): Promise<Channel> => {
+    let isSignalingChannelClosed = false;
     const config: RTCConfiguration = rtcConfiguration || {};
     const connection: RTCPeerConnection = new RTCPeerConnection(config);
     connection.onnegotiationneeded = async () => {
@@ -17,7 +18,9 @@ export const webrtcAdapter: WebrtcAdapter = {
       );
     };
     connection.onicecandidate = ({ candidate }) => {
-      signalingChannel.send(JSON.stringify({ candidate }));
+      if (!isSignalingChannelClosed) {
+        signalingChannel.send(JSON.stringify({ candidate }));
+      }
     };
     connection.addEventListener("icecandidateerror", (e) => {
       if (e instanceof RTCPeerConnectionIceErrorEvent) {
@@ -32,6 +35,7 @@ export const webrtcAdapter: WebrtcAdapter = {
       return new Promise<Channel>((resolve) => {
         rtcDataChannel.onopen = () => {
           signalingChannel.close();
+          isSignalingChannelClosed = true;
           rtcDataChannel.addEventListener("close", () => {
             connection.close();
           });
@@ -43,6 +47,7 @@ export const webrtcAdapter: WebrtcAdapter = {
         connection.ondatachannel = (event) => {
           event.channel.onopen = () => {
             signalingChannel.close();
+            isSignalingChannelClosed = true;
             event.channel.addEventListener("close", () => {
               connection.close();
             });
