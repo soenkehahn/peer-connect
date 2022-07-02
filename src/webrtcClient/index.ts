@@ -1,5 +1,5 @@
-import { connect as signalingConnect, HasColor } from "./signalingClient";
-import { Channel } from "./utils/channel";
+import { connect as signalingConnect, HasColor } from "../signalingClient";
+import { Channel } from "../utils/channel";
 import { webrtcAdapter } from "./webrtcAdapter";
 
 export type WebrtcAdapter = {
