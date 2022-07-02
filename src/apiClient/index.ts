@@ -1,5 +1,5 @@
 import { Api, makeServer, ToServer } from "./api";
-import { connect as webrtcConnect } from "./webrtcClient";
+import { connect as webrtcConnect } from "../webrtcClient";
 
 export type ToPeer<T extends Api> = ToServer<T> & { close: () => void };
 

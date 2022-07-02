@@ -1,9 +1,9 @@
 import { AddressInfo, WebSocketServer } from "ws";
-import { runServer } from "./server";
-import { expectToHang, waitFor } from "./utils";
-import { connect, ToPeer } from "./apiClient";
+import { runServer } from "../server";
+import { expectToHang, waitFor } from "../utils";
+import { connect, ToPeer } from ".";
 
-jest.mock("./webrtcClient/webrtcAdapter");
+jest.mock("../webrtcClient/webrtcAdapter");
 
 jest.setTimeout(1000);
 
