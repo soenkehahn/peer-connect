@@ -33,3 +33,7 @@ export const expectToHang = async (
     );
   }
 };
+
+export const checkNever = (input: never) => {
+  throw new Error("not never: " + input);
+};
