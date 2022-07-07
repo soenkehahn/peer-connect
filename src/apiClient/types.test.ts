@@ -83,17 +83,17 @@ describe("parseJSON", () => {
     });
   });
 
-  // describe("literal string types", () => {
-  //   it("allows string literals as types", () => {
-  //     expect(parseJSON(literal("foo"), '"foo"')).toEqual("foo");
-  //     expect(() => parseJSON(literal("foo"), '"bar"')).toThrow(
-  //       'expected: "foo", got: "bar"'
-  //     );
-  //     expect(() => parseJSON(literal("foo"), "true")).toThrow(
-  //       'expected: "foo", got: true'
-  //     );
-  //   });
-  // });
+  describe("literal string types", () => {
+    it("allows string literals as types", () => {
+      expect(parseJSON(t.literal("foo"), '"foo"')).toEqual("foo");
+      expect(() => parseJSON(t.literal("foo"), '"bar"')).toThrow(
+        'expected: "foo", got: "bar"'
+      );
+      expect(() => parseJSON(t.literal("foo"), "true")).toThrow(
+        'expected: "foo", got: true'
+      );
+    });
+  });
 
   describe("unions", () => {
     it.todo("allows unions of string literals");
