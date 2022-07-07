@@ -25,7 +25,7 @@ type literalType<T> = {
   __tag: "literal";
   literal: T;
 };
-export const literal = <T>(literal: T): literalType<T> => ({
+export const literal = <T extends string>(literal: T): literalType<T> => ({
   __tag: "literal",
   literal,
 });
@@ -62,16 +62,17 @@ export type Type<T = never, U = never> =
       [key: string]: Type;
     };
 
-export type ToType<
-  T extends Type<U, V>,
-  U = never,
-  V = never
-> = T extends stringType
+export type ToType<T> = T extends stringType
   ? string
   : T extends numberType
   ? number
-  : T extends literalType<infer U>
+  : T extends literalType<infer U extends string>
   ? U
+  : T extends unionType<
+      infer U extends Type<infer _, infer _>,
+      infer V extends Type<infer _, infer _>
+    >
+  ? ToType<U> | ToType<V>
   : T extends null
   ? null
   : T extends { [key: string]: Type }
@@ -119,7 +120,7 @@ const typeToString = <U, V>(typ: Type<U, V>): string => {
 export const parseJSON = <T extends Type<U, V>, U, V>(
   typ: T,
   json: string
-): ToType<T, U, V> => {
+): ToType<T> => {
   const value: unknown = JSON.parse(json);
   return verify(typ, value);
 };
@@ -127,7 +128,7 @@ export const parseJSON = <T extends Type<U, V>, U, V>(
 export const verify = <T extends Type<U, V>, U, V>(
   typ: T,
   value: unknown
-): ToType<T, U, V> => {
+): ToType<T> => {
   if (!isOfType(typ, value)) {
     throw new Error(
       `expected: ${typeToString(typ)}, got: ${JSON.stringify(value)}`
@@ -139,7 +140,7 @@ export const verify = <T extends Type<U, V>, U, V>(
 const isOfType = <T extends Type<U, V>, U, V>(
   typ: T,
   value: unknown
-): value is ToType<T, U, V> => {
+): value is ToType<T> => {
   if (typ === null) {
     return value === null;
   } else if (isStringType(typ)) {

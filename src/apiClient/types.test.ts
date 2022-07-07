@@ -1,4 +1,4 @@
-import { parseJSON } from "./types";
+import { parseJSON, ToType } from "./types";
 import * as t from "./types";
 
 describe("parseJSON", () => {
@@ -142,5 +142,23 @@ describe("parseJSON", () => {
         'expected: "foo" | "bar" | "baz", got: 42'
       );
     });
+
+    test("unions work with TypeOf", () => {
+      const typ = t.union(t.literal("foo"), t.literal("bar"));
+      const ts: Array<ToType<typeof typ>> = ["foo", "bar"];
+      ts;
+    });
+
+    // test("object fields can have different union types", () => {
+    //   const typ = {
+    //     x: t.union(t.literal("foo"), t.literal("bar")),
+    //     y: t.union(t.literal("a"), t.literal("b")),
+    //   };
+    //   const _ts: Array<ToType<typeof typ>> = [
+    //     { x: "foo", y: "a" },
+    //     { x: "bar", y: "b" },
+    //     { x: "foo", y: "b" },
+    //   ];
+    // });
   });
 });
