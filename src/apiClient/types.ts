@@ -51,7 +51,7 @@ export const union = <
 const isUnionType = <A, B>(input: unknown): input is unionType<A, B> =>
   (input as unionType<null, null>).__tag === "union";
 
-export type Type<T = never, U = never> =
+export type Type<T = unknown, U = unknown> =
   | null
   | stringType
   | numberType

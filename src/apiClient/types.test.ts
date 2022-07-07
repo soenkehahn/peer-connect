@@ -73,6 +73,12 @@ describe("parseJSON", () => {
         'expected: "foo", got: true'
       );
     });
+
+    it("works with ToType", () => {
+      const typ = t.literal("foo");
+      const x: ToType<typeof typ> = "foo";
+      expect(parseJSON(typ, JSON.stringify(x))).toEqual("foo");
+    });
   });
 
   describe("unions", () => {
@@ -155,6 +161,20 @@ describe("parseJSON", () => {
       );
     });
 
+    test("object fields can have literal types and types without parameters", () => {
+      const typ = {
+        success: t.boolean,
+        color: t.literal("foo"),
+      };
+      const ts: Array<ToType<typeof typ>> = [
+        { success: true, color: "foo" },
+        { success: false, color: "foo" },
+      ];
+      for (const x of ts) {
+        expect(parseJSON(typ, JSON.stringify(x))).toEqual(x);
+      }
+    });
+
     test("object fields can have different union types", () => {
       const typ = {
         x: t.union(t.literal("foo"), t.literal("bar")),
@@ -165,7 +185,9 @@ describe("parseJSON", () => {
         { x: "bar", y: "b" },
         { x: "foo", y: "b" },
       ];
-      ts;
+      for (const x of ts) {
+        expect(parseJSON(typ, JSON.stringify(x))).toEqual(x);
+      }
     });
 
     it("propagates parameterized types to field types correctly", () => {
