@@ -43,6 +43,12 @@ describe("parseJSON", () => {
         'expected: boolean, got: "foo"'
       );
     });
+
+    it("works with ToType", () => {
+      const typ = t.boolean;
+      const ts: Array<ToType<typeof typ>> = [true, false];
+      ts;
+    });
   });
 
   describe("null", () => {
@@ -54,6 +60,54 @@ describe("parseJSON", () => {
       expect(() => parseJSON(null, '"foo"')).toThrow(
         'expected: null, got: "foo"'
       );
+    });
+  });
+
+  describe("literal string types", () => {
+    it("allows string literals as types", () => {
+      expect(parseJSON(t.literal("foo"), '"foo"')).toEqual("foo");
+      expect(() => parseJSON(t.literal("foo"), '"bar"')).toThrow(
+        'expected: "foo", got: "bar"'
+      );
+      expect(() => parseJSON(t.literal("foo"), "true")).toThrow(
+        'expected: "foo", got: true'
+      );
+    });
+  });
+
+  describe("unions", () => {
+    it("allows unions of two string literals", () => {
+      const union = t.union(t.literal("foo"), t.literal("bar"));
+      expect(parseJSON(union, '"foo"')).toEqual("foo");
+      expect(parseJSON(union, '"bar"')).toEqual("bar");
+      expect(() => parseJSON(union, '"baz"')).toThrow(
+        'expected: "foo" | "bar", got: "baz"'
+      );
+      expect(() => parseJSON(union, "42")).toThrow(
+        'expected: "foo" | "bar", got: 42'
+      );
+    });
+
+    it("allows unions of more than two string literals", () => {
+      const union = t.union(
+        t.literal("foo"),
+        t.union(t.literal("bar"), t.literal("baz"))
+      );
+      expect(parseJSON(union, '"foo"')).toEqual("foo");
+      expect(parseJSON(union, '"bar"')).toEqual("bar");
+      expect(parseJSON(union, '"baz"')).toEqual("baz");
+      expect(() => parseJSON(union, '"invalid"')).toThrow(
+        'expected: "foo" | "bar" | "baz", got: "invalid"'
+      );
+      expect(() => parseJSON(union, "42")).toThrow(
+        'expected: "foo" | "bar" | "baz", got: 42'
+      );
+    });
+
+    test("unions work with TypeOf", () => {
+      const typ = t.union(t.literal("foo"), t.literal("bar"));
+      const ts: Array<ToType<typeof typ>> = ["foo", "bar"];
+      ts;
     });
   });
 
@@ -130,54 +184,6 @@ describe("parseJSON", () => {
       // @ts-expect-error
       const z: ToType<typeof typ> = { x: "foo", y: "foo" };
       z;
-    });
-  });
-
-  describe("literal string types", () => {
-    it("allows string literals as types", () => {
-      expect(parseJSON(t.literal("foo"), '"foo"')).toEqual("foo");
-      expect(() => parseJSON(t.literal("foo"), '"bar"')).toThrow(
-        'expected: "foo", got: "bar"'
-      );
-      expect(() => parseJSON(t.literal("foo"), "true")).toThrow(
-        'expected: "foo", got: true'
-      );
-    });
-  });
-
-  describe("unions", () => {
-    it("allows unions of two string literals", () => {
-      const union = t.union(t.literal("foo"), t.literal("bar"));
-      expect(parseJSON(union, '"foo"')).toEqual("foo");
-      expect(parseJSON(union, '"bar"')).toEqual("bar");
-      expect(() => parseJSON(union, '"baz"')).toThrow(
-        'expected: "foo" | "bar", got: "baz"'
-      );
-      expect(() => parseJSON(union, "42")).toThrow(
-        'expected: "foo" | "bar", got: 42'
-      );
-    });
-
-    it("allows unions of more than two string literals", () => {
-      const union = t.union(
-        t.literal("foo"),
-        t.union(t.literal("bar"), t.literal("baz"))
-      );
-      expect(parseJSON(union, '"foo"')).toEqual("foo");
-      expect(parseJSON(union, '"bar"')).toEqual("bar");
-      expect(parseJSON(union, '"baz"')).toEqual("baz");
-      expect(() => parseJSON(union, '"invalid"')).toThrow(
-        'expected: "foo" | "bar" | "baz", got: "invalid"'
-      );
-      expect(() => parseJSON(union, "42")).toThrow(
-        'expected: "foo" | "bar" | "baz", got: 42'
-      );
-    });
-
-    test("unions work with TypeOf", () => {
-      const typ = t.union(t.literal("foo"), t.literal("bar"));
-      const ts: Array<ToType<typeof typ>> = ["foo", "bar"];
-      ts;
     });
   });
 });

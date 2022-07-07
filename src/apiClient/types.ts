@@ -52,20 +52,24 @@ const isUnionType = <A, B>(input: unknown): input is unionType<A, B> =>
   (input as unionType<null, null>).__tag === "union";
 
 export type Type<T = never, U = never> =
+  | null
   | stringType
   | numberType
   | booleanType
   | literalType<T>
   | unionType<T, U>
-  | null
   | {
       [key: string]: Type;
     };
 
-export type ToType<T> = T extends stringType
+export type ToType<T> = T extends null
+  ? null
+  : T extends stringType
   ? string
   : T extends numberType
   ? number
+  : T extends booleanType
+  ? boolean
   : T extends literalType<infer U extends string>
   ? U
   : T extends unionType<
@@ -73,8 +77,6 @@ export type ToType<T> = T extends stringType
       infer V extends Type<infer _, infer _>
     >
   ? ToType<U> | ToType<V>
-  : T extends null
-  ? null
   : T extends { [key: string]: Type<infer _, infer _> }
   ? {
       [Key in keyof T]: ToType<T[Key]>;
