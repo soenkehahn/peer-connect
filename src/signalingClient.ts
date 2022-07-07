@@ -46,6 +46,5 @@ const Confirmation = {
   color: t.union(t.literal("blue"), t.literal("green")),
 };
 
-const parseConfirmation = (json: string): Confirmation => {
-  return parseJSON(Confirmation, json);
-};
+const parseConfirmation = (json: string): Confirmation =>
+  parseJSON(Confirmation, json);

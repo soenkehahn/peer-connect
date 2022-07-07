@@ -1,5 +1,5 @@
 import { Api, makeServer, ToServer } from "./api";
-import { connect as webrtcConnect } from "../webrtcClient";
+import { connect as webrtcConnect, DisallowPool } from "../webrtcClient";
 
 export type ToPeer<T extends Api> = ToServer<T> & { close: () => void };
 
@@ -7,7 +7,7 @@ export const connect = async <Offer extends Api, Seek extends Api>(args: {
   signalingServer: string;
   rtcConfiguration?: RTCConfiguration;
   id: string;
-  disallow?: Array<string>;
+  disallow?: DisallowPool;
   offer: Offer;
   server: ToPeer<Offer>;
   seek: Seek;
@@ -18,7 +18,7 @@ export const connect = async <Offer extends Api, Seek extends Api>(args: {
     signalingServer: args.signalingServer,
     rtcConfiguration: args.rtcConfiguration,
     id: args.id,
-    disallow: args.disallow || [],
+    disallow: args.disallow || new DisallowPool(),
     offer: offerString,
     seek: seekString,
   });

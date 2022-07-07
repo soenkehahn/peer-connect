@@ -1,5 +1,6 @@
 import { connect, ToPeer } from "./apiClient";
 import { Api } from "./apiClient/api";
+import { DisallowPool } from "./webrtcClient";
 
 export const newSlot = <Offer extends Api, Seek extends Api>({
   signalingServer,
@@ -14,7 +15,7 @@ export const newSlot = <Offer extends Api, Seek extends Api>({
   signalingServer: string;
   rtcConfiguration?: RTCConfiguration;
   id: string;
-  disallow?: Array<string>;
+  disallow?: DisallowPool;
   offer: Offer;
   handler: ToPeer<Offer>;
   seek: Seek;

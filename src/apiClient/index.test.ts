@@ -3,6 +3,7 @@ import { runServer } from "../server";
 import { expectToHang, waitFor } from "../utils";
 import { connect, ToPeer } from ".";
 import * as t from "./types";
+import { DisallowPool } from "../webrtcClient";
 
 jest.mock("../webrtcClient/webrtcAdapter");
 
@@ -230,7 +231,7 @@ describe("apiClient", () => {
       connect({
         signalingServer: url,
         id: "a",
-        disallow: ["b"],
+        disallow: new DisallowPool(["b"]),
         offer: api,
         server: server(),
         seek: api,

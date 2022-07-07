@@ -1,7 +1,7 @@
 import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "../server";
 import { Channel } from "../utils/channel";
-import { connect } from "../webrtcClient";
+import { connect, DisallowPool } from "../webrtcClient";
 
 jest.mock("./webrtcAdapter");
 
@@ -28,14 +28,14 @@ describe("offer & seek", () => {
       connect({
         signalingServer: url,
         id: "a",
-        disallow: [],
+        disallow: new DisallowPool(),
         offer: "a",
         seek: "b",
       }),
       connect({
         signalingServer: url,
         id: "b",
-        disallow: [],
+        disallow: new DisallowPool(),
         offer: "b",
         seek: "a",
       }),
@@ -45,5 +45,28 @@ describe("offer & seek", () => {
   it("finds a peer", async () => {
     a.send("test message");
     expect(await b.next()).toEqual("test message");
+  });
+
+  describe("disallow pools", () => {
+    it("adds ids to the disallow pool on connection", async () => {
+      const disallowPool = new DisallowPool();
+      await Promise.all([
+        connect({
+          signalingServer: url,
+          id: "alice",
+          disallow: disallowPool,
+          offer: "a",
+          seek: "b",
+        }),
+        connect({
+          signalingServer: url,
+          id: "bob",
+          disallow: new DisallowPool(),
+          offer: "b",
+          seek: "a",
+        }),
+      ]);
+      expect(disallowPool.ids).toEqual(["bob"]);
+    });
   });
 });
