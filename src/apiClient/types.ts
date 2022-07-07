@@ -100,7 +100,12 @@ const typeToString = <U, V>(typ: Type<U, V>): string => {
       return "{}";
     }
     let result = "{ ";
+    let first = true;
     for (const field in typ) {
+      if (!first) {
+        result += ", ";
+      }
+      first = false;
       result += `${field}: ${typeToString(typ[field])}`;
     }
     result += " }";

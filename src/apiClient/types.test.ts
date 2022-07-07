@@ -62,10 +62,16 @@ describe("parseJSON", () => {
       expect(parseJSON({ foo: t.number }, '{"foo": 42}')).toEqual({ foo: 42 });
     });
 
-    test("invalid object", () => {
+    test("invalid objects", () => {
       expect(() => parseJSON({ foo: t.number }, '"foo"')).toThrow(
         'expected: { foo: number }, got: "foo"'
       );
+    });
+
+    test("invalid objects with multiple fields", () => {
+      expect(() =>
+        parseJSON({ foo: t.number, bar: t.string }, '"foo"')
+      ).toThrow('expected: { foo: number, bar: string }, got: "foo"');
     });
 
     it("ignores additional fields", () => {
