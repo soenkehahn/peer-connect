@@ -1,13 +1,13 @@
 import { checkNever } from "../utils";
 
-export type stringType = {
+type stringType = {
   __tag: "string";
 };
 export const string: stringType = { __tag: "string" };
 const isStringType = (input: unknown): input is stringType =>
   (input as stringType).__tag === "string";
 
-export type numberType = {
+type numberType = {
   __tag: "number";
 };
 export const number: numberType = { __tag: "number" };

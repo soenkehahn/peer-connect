@@ -14,19 +14,14 @@ const App = () => {
   );
 };
 
-const pingApi: PingApi = {
+const pingApi = {
   ping: {
     input: t.string,
     output: null,
   },
 };
 
-type PingApi = {
-  ping: {
-    input: t.stringType;
-    output: null;
-  };
-};
+type PingApi = typeof pingApi;
 
 const HelloWorldPeer = (props: { signalingServer: string; name: string }) => {
   const [counter, setCounter] = useState(0);

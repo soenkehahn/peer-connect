@@ -23,7 +23,7 @@ describe("apiClient", () => {
   });
 
   it("allows to find a peer by api", async () => {
-    const MyApi: { sendMessage: { input: t.stringType; output: null } } = {
+    const MyApi = {
       sendMessage: { input: t.string, output: null },
     };
     const aReceived: Array<string> = [];
@@ -65,17 +65,7 @@ describe("apiClient", () => {
   });
 
   test("more complex apis", async () => {
-    type MyApi = {
-      sendMessage: {
-        input: { message: t.stringType; priority: t.numberType };
-        output: { read: t.stringType };
-      };
-      announceStatus: {
-        input: t.stringType;
-        output: null;
-      };
-    };
-    const myApi: MyApi = {
+    const myApi = {
       sendMessage: {
         input: { message: t.string, priority: t.number },
         output: { read: t.string },
@@ -87,7 +77,7 @@ describe("apiClient", () => {
     };
     const aReceived: Array<[string, number]> = [];
     let bStatus: string = "";
-    const aServer: ToPeer<MyApi> = {
+    const aServer: ToPeer<typeof myApi> = {
       sendMessage: (input: { message: string; priority: number }) => {
         aReceived.push([input.message, input.priority]);
         return { read: "read by a" };
@@ -100,7 +90,7 @@ describe("apiClient", () => {
     };
     const bReceived: Array<[string, number]> = [];
     let aStatus: string = "";
-    const bServer: ToPeer<MyApi> = {
+    const bServer: ToPeer<typeof myApi> = {
       sendMessage: (input: { message: string; priority: number }) => {
         bReceived.push([input.message, input.priority]);
         return { read: "read by b" };
@@ -143,32 +133,20 @@ describe("apiClient", () => {
   });
 
   test("asymmetric apis", async () => {
-    type AApi = {
-      callA: {
-        input: t.stringType;
-        output: null;
-      };
-    };
-    const aApi: AApi = {
+    const aApi = {
       callA: {
         input: t.string,
         output: null,
       },
     };
-    type BApi = {
-      callB: {
-        input: t.numberType;
-        output: null;
-      };
-    };
-    const bApi: BApi = {
+    const bApi = {
       callB: {
         input: t.number,
         output: null,
       },
     };
     const aCalls: Array<string> = [];
-    const aServer: ToPeer<AApi> = {
+    const aServer: ToPeer<typeof aApi> = {
       callA: (x) => {
         aCalls.push(x);
         return null;
@@ -176,7 +154,7 @@ describe("apiClient", () => {
       close() {},
     };
     const bCalls: Array<number> = [];
-    const bServer: ToPeer<BApi> = {
+    const bServer: ToPeer<typeof bApi> = {
       callB: (x) => {
         bCalls.push(x);
         return null;
@@ -206,24 +184,17 @@ describe("apiClient", () => {
   });
 
   it("works for concurrent requests", async () => {
-    type AApi = {};
-    const aApi: AApi = {};
-    type BApi = {
-      double: {
-        input: t.numberType;
-        output: t.numberType;
-      };
-    };
-    const bApi: BApi = {
+    const aApi = {};
+    const bApi = {
       double: {
         input: t.number,
         output: t.number,
       },
     };
-    const aServer: ToPeer<AApi> = {
+    const aServer: ToPeer<typeof aApi> = {
       close: () => {},
     };
-    const bServer: ToPeer<BApi> = {
+    const bServer: ToPeer<typeof bApi> = {
       double: (x) => x * 2,
       close() {},
     };
@@ -276,15 +247,13 @@ describe("apiClient", () => {
 
   describe("closing", () => {
     it("relays closing the connection", async () => {
-      type AApi = {};
-      const aApi: AApi = {};
-      type BApi = {};
-      const bApi: BApi = {};
-      const aServer: ToPeer<AApi> = {
+      const aApi = {};
+      const bApi = {};
+      const aServer: ToPeer<typeof aApi> = {
         close() {},
       };
       let bIsClosed = false;
-      const bServer: ToPeer<BApi> = {
+      const bServer: ToPeer<typeof bApi> = {
         close: () => (bIsClosed = true),
       };
       const [a, _b] = await Promise.all([
@@ -308,12 +277,10 @@ describe("apiClient", () => {
     });
 
     it("errors when trying to call a function on a remote closed peer", async () => {
-      type AApi = { foo: { input: t.numberType; output: null } };
-      const aApi: AApi = { foo: { input: t.number, output: null } };
-      type BApi = {};
-      const bApi: BApi = {};
+      const aApi = { foo: { input: t.number, output: null } };
+      const bApi = {};
       let aIsClosed = false;
-      const aServer: ToPeer<AApi> = {
+      const aServer: ToPeer<typeof aApi> = {
         foo() {
           return null;
         },
@@ -322,7 +289,7 @@ describe("apiClient", () => {
         },
       };
       let bIsClosed = false;
-      const bServer: ToPeer<BApi> = {
+      const bServer: ToPeer<typeof bApi> = {
         close: () => (bIsClosed = true),
       };
       const [a, _b] = await Promise.all([

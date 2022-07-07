@@ -4,19 +4,14 @@ import * as ReactDOM from "react-dom/client";
 import { connect, ToPeer } from "../src/apiClient";
 import * as t from "../src/apiClient/types";
 
-const chatApi: ChatApi = {
+const chatApi = {
   sendMessage: {
     input: t.string,
     output: null,
   },
 };
 
-type ChatApi = {
-  sendMessage: {
-    input: t.stringType;
-    output: null;
-  };
-};
+type ChatApi = typeof chatApi;
 
 const id = uuid.v4();
 
