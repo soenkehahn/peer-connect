@@ -22,11 +22,11 @@ describe("parseJSON", () => {
 
   describe("numbers", () => {
     test("valid numbers", () => {
-      expect(parseJSON("number", "42")).toEqual(42);
+      expect(parseJSON(t.number, "42")).toEqual(42);
     });
 
     test("invalid numbers", () => {
-      expect(() => parseJSON("number", '"foo"')).toThrow(
+      expect(() => parseJSON(t.number, '"foo"')).toThrow(
         'expected: number, got: "foo"'
       );
     });
@@ -46,11 +46,11 @@ describe("parseJSON", () => {
 
   describe("objects", () => {
     test("valid objects", () => {
-      expect(parseJSON({ foo: "number" }, '{"foo": 42}')).toEqual({ foo: 42 });
+      expect(parseJSON({ foo: t.number }, '{"foo": 42}')).toEqual({ foo: 42 });
     });
 
     test("invalid object", () => {
-      expect(() => parseJSON({ foo: "number" }, '"foo"')).toThrow(
+      expect(() => parseJSON({ foo: t.number }, '"foo"')).toThrow(
         'expected: { foo: number }, got: "foo"'
       );
     });
@@ -66,18 +66,18 @@ describe("parseJSON", () => {
 
     it("nested objects", () => {
       expect(
-        parseJSON({ foo: { bar: "number" } }, '{"foo": {"bar": 42}}')
+        parseJSON({ foo: { bar: t.number } }, '{"foo": {"bar": 42}}')
       ).toEqual({ foo: { bar: 42 } });
     });
 
     test("missing fields", () => {
-      expect(() => parseJSON({ foo: "number" }, "{}")).toThrow(
+      expect(() => parseJSON({ foo: t.number }, "{}")).toThrow(
         "expected: { foo: number }, got: {}"
       );
     });
 
     test("invalid children", () => {
-      expect(() => parseJSON({ foo: "number" }, '{"foo": "bar"}')).toThrow(
+      expect(() => parseJSON({ foo: t.number }, '{"foo": "bar"}')).toThrow(
         'expected: { foo: number }, got: {"foo":"bar"}'
       );
     });

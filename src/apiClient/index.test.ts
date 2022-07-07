@@ -67,7 +67,7 @@ describe("apiClient", () => {
   test("more complex apis", async () => {
     type MyApi = {
       sendMessage: {
-        input: { message: t.stringType; priority: "number" };
+        input: { message: t.stringType; priority: t.numberType };
         output: { read: t.stringType };
       };
       announceStatus: {
@@ -77,7 +77,7 @@ describe("apiClient", () => {
     };
     const myApi: MyApi = {
       sendMessage: {
-        input: { message: t.string, priority: "number" },
+        input: { message: t.string, priority: t.number },
         output: { read: t.string },
       },
       announceStatus: {
@@ -157,13 +157,13 @@ describe("apiClient", () => {
     };
     type BApi = {
       callB: {
-        input: "number";
+        input: t.numberType;
         output: null;
       };
     };
     const bApi: BApi = {
       callB: {
-        input: "number",
+        input: t.number,
         output: null,
       },
     };
@@ -210,14 +210,14 @@ describe("apiClient", () => {
     const aApi: AApi = {};
     type BApi = {
       double: {
-        input: "number";
-        output: "number";
+        input: t.numberType;
+        output: t.numberType;
       };
     };
     const bApi: BApi = {
       double: {
-        input: "number",
-        output: "number",
+        input: t.number,
+        output: t.number,
       },
     };
     const aServer: ToPeer<AApi> = {
@@ -308,8 +308,8 @@ describe("apiClient", () => {
     });
 
     it("errors when trying to call a function on a remote closed peer", async () => {
-      type AApi = { foo: { input: "number"; output: null } };
-      const aApi: AApi = { foo: { input: "number", output: null } };
+      type AApi = { foo: { input: t.numberType; output: null } };
+      const aApi: AApi = { foo: { input: t.number, output: null } };
       type BApi = {};
       const bApi: BApi = {};
       let aIsClosed = false;

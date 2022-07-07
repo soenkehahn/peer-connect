@@ -7,9 +7,16 @@ export const string: stringType = { __tag: "string" };
 const isStringType = (input: unknown): input is stringType =>
   (input as stringType).__tag === "string";
 
+export type numberType = {
+  __tag: "number";
+};
+export const number: numberType = { __tag: "number" };
+const isNumberType = (input: unknown): input is numberType =>
+  (input as numberType).__tag === "number";
+
 export type Type =
   | stringType
-  | "number"
+  | numberType
   | null
   | {
       [key: string]: Type;
@@ -17,7 +24,7 @@ export type Type =
 
 export type ToType<T extends Type> = T extends stringType
   ? string
-  : T extends "number"
+  : T extends numberType
   ? number
   : T extends null
   ? null
@@ -32,7 +39,7 @@ const typeToString = (typ: Type): string => {
     return "null";
   } else if (isStringType(typ)) {
     return "string";
-  } else if (typ === "number") {
+  } else if (isNumberType(typ)) {
     return "number";
   } else if (typeof typ === "object") {
     if (Object.keys(typ).length === 0) {
@@ -40,7 +47,7 @@ const typeToString = (typ: Type): string => {
     }
     let result = "{ ";
     for (const field in typ) {
-      result += `${field}: ${typ[field]}`;
+      result += `${field}: ${typeToString(typ[field])}`;
     }
     result += " }";
     return result;
@@ -76,7 +83,7 @@ const isOfType = <T extends Type>(
     if (typeof value !== "string") {
       return false;
     }
-  } else if (typ === "number") {
+  } else if (isNumberType(typ)) {
     if (typeof value !== "number") {
       return false;
     }
