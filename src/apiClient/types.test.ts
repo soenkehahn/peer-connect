@@ -1,19 +1,20 @@
 import { parseJSON } from "./types";
+import * as t from "./types";
 
 describe("parseJSON", () => {
   it("throws errors for invalid json", () => {
-    expect(() => parseJSON("string", "{")).toThrow(
+    expect(() => parseJSON(t.string, "{")).toThrow(
       "Unexpected end of JSON input"
     );
   });
 
   describe("strings", () => {
     test("valid strings", () => {
-      expect(parseJSON("string", '"foo"')).toEqual("foo");
+      expect(parseJSON(t.string, '"foo"')).toEqual("foo");
     });
 
     test("invalid strings", () => {
-      expect(() => parseJSON("string", "42")).toThrow(
+      expect(() => parseJSON(t.string, "42")).toThrow(
         "expected: string, got: 42"
       );
     });
@@ -80,5 +81,21 @@ describe("parseJSON", () => {
         'expected: { foo: number }, got: {"foo":"bar"}'
       );
     });
+  });
+
+  // describe("literal string types", () => {
+  //   it("allows string literals as types", () => {
+  //     expect(parseJSON(literal("foo"), '"foo"')).toEqual("foo");
+  //     expect(() => parseJSON(literal("foo"), '"bar"')).toThrow(
+  //       'expected: "foo", got: "bar"'
+  //     );
+  //     expect(() => parseJSON(literal("foo"), "true")).toThrow(
+  //       'expected: "foo", got: true'
+  //     );
+  //   });
+  // });
+
+  describe("unions", () => {
+    it.todo("allows unions of string literals");
   });
 });

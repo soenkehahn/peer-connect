@@ -3,12 +3,13 @@ import { connect, ToPeer } from "./apiClient";
 import { runServer } from "./server";
 import { newSlot } from "./slot";
 import { expectToHang, waitFor } from "./utils";
+import * as t from "./apiClient/types";
 
 jest.mock("./webrtcClient/webrtcAdapter");
 
 jest.setTimeout(1000);
 
-const sendApi = { send: { input: "string", output: null } } as const;
+const sendApi = { send: { input: t.string, output: null } } as const;
 
 const emptyApi = {} as const;
 

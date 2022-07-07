@@ -1,4 +1,5 @@
 import { ToType, Type, verify } from "./types";
+import * as t from "./types";
 
 export type Api = { [name: string]: Endpoint };
 
@@ -21,7 +22,7 @@ export const handleMessages =
     server: ToServer<ServerApi>
   ): ((message: unknown) => Promise<unknown>) =>
   async (message: unknown): Promise<unknown> => {
-    const parsed = verify({ endpoint: "string" }, message);
+    const parsed = verify({ endpoint: t.string }, message);
     const endpoint = parsed.endpoint;
     const input: unknown = (parsed as any).input;
     verify(api[endpoint].input, input);

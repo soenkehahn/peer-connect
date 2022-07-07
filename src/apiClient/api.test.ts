@@ -1,10 +1,11 @@
 import { Api, handleMessages, makeServer, ToServer } from "./api";
+import * as t from "./types";
 
 describe("handleMessages", () => {
   it("allows to specify an api with a single function", async () => {
-    const MyApi: { endpoint: { input: "string"; output: null } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: null } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: null,
       },
     };
@@ -20,17 +21,17 @@ describe("handleMessages", () => {
   });
 
   it("produces type errors if the input value doesn't match", () => {
-    const MyApi: { endpoint: { input: "string"; output: null } } = {
-      endpoint: { input: "string", output: null },
+    const MyApi: { endpoint: { input: t.stringType; output: null } } = {
+      endpoint: { input: t.string, output: null },
     };
     // @ts-expect-error
     handleMessages(MyApi, { endpoint: (input: number): null => null });
   });
 
   it("allows to specify return values", async () => {
-    const MyApi: { endpoint: { input: "string"; output: "number" } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: "number" } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: "number",
       },
     };
@@ -43,9 +44,9 @@ describe("handleMessages", () => {
   });
 
   it("produces type errors if the output value doesn't match", () => {
-    const MyApi: { endpoint: { input: "string"; output: "number" } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: "number" } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: "number",
       },
     };
@@ -54,9 +55,9 @@ describe("handleMessages", () => {
   });
 
   it("produces type errors if the server doesn't match the type", () => {
-    const MyApi: { endpoint: { input: "string"; output: "number" } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: "number" } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: "number",
       },
     };
@@ -66,11 +67,11 @@ describe("handleMessages", () => {
 
   it("allows multiple endpoints", async () => {
     const MyApi: {
-      a: { input: "string"; output: "number" };
-      b: { input: "number"; output: "string" };
+      a: { input: t.stringType; output: "number" };
+      b: { input: "number"; output: t.stringType };
     } = {
-      a: { input: "string", output: "number" },
-      b: { input: "number", output: "string" },
+      a: { input: t.string, output: "number" },
+      b: { input: "number", output: t.string },
     };
     const handleMessage = handleMessages(MyApi, {
       a: (input: string): number => input.length,
@@ -82,9 +83,9 @@ describe("handleMessages", () => {
 
   it("works for async functions", async () => {
     const MyApi: {
-      a: { input: "string"; output: "number" };
+      a: { input: t.stringType; output: "number" };
     } = {
-      a: { input: "string", output: "number" },
+      a: { input: t.string, output: "number" },
     };
     const handleMessage = handleMessages(MyApi, {
       a: (input: string): Promise<number> => Promise.resolve(input.length),
@@ -93,9 +94,9 @@ describe("handleMessages", () => {
   });
 
   test("apis can be serialized", () => {
-    const MyApi: { endpoint: { input: "string"; output: "number" } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: "number" } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: "number",
       },
     };
@@ -105,9 +106,9 @@ describe("handleMessages", () => {
 
   test("object inputs", async () => {
     const MyApi: {
-      a: { input: { s: "string"; n: "number" }; output: "string" };
+      a: { input: { s: t.stringType; n: "number" }; output: t.stringType };
     } = {
-      a: { input: { s: "string", n: "number" }, output: "string" },
+      a: { input: { s: t.string, n: "number" }, output: t.string },
     };
     const handleMessage = handleMessages(MyApi, {
       a: (input: { s: string; n: number }): string => input.s.repeat(input.n),
@@ -119,9 +120,15 @@ describe("handleMessages", () => {
 
   test("object outputs", async () => {
     const MyApi: {
-      a: { input: "string"; output: { length: "number"; doubled: "number" } };
+      a: {
+        input: t.stringType;
+        output: { length: "number"; doubled: "number" };
+      };
     } = {
-      a: { input: "string", output: { length: "number", doubled: "number" } },
+      a: {
+        input: t.string,
+        output: { length: "number", doubled: "number" },
+      },
     };
     const handleMessage = handleMessages(MyApi, {
       a: (input: string): { length: number; doubled: number } => ({
@@ -136,9 +143,9 @@ describe("handleMessages", () => {
   });
 
   it("throws for invalid messages", async () => {
-    const MyApi: { endpoint: { input: "string"; output: null } } = {
+    const MyApi: { endpoint: { input: t.stringType; output: null } } = {
       endpoint: {
-        input: "string",
+        input: t.string,
         output: null,
       },
     };
@@ -154,10 +161,10 @@ describe("handleMessages", () => {
 describe("makeServer", () => {
   it("is the counterpart to handleMessages", async () => {
     type MyApi = {
-      a: { input: "string"; output: "number" };
+      a: { input: t.stringType; output: "number" };
     };
     const myApi: MyApi = {
-      a: { input: "string", output: "number" },
+      a: { input: t.string, output: "number" },
     };
     const server: ToServer<MyApi> = { a: (input: string) => input.length };
     const serializedServer: ToServer<MyApi> = makeServer(
@@ -170,14 +177,14 @@ describe("makeServer", () => {
   it("works for object types", async () => {
     type MyApi = {
       a: {
-        input: { s: "string"; n: "number" };
-        output: { result: "string"; doubled: "number" };
+        input: { s: t.stringType; n: "number" };
+        output: { result: t.stringType; doubled: "number" };
       };
     };
     const myApi: MyApi = {
       a: {
-        input: { s: "string", n: "number" },
-        output: { result: "string", doubled: "number" },
+        input: { s: t.string, n: "number" },
+        output: { result: t.string, doubled: "number" },
       },
     };
     const server: ToServer<MyApi> = {

@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import * as uuid from "uuid";
 import * as ReactDOM from "react-dom/client";
 import { connect, ToPeer } from "../src/apiClient";
+import * as t from "../src/apiClient/types";
 
 const chatApi: ChatApi = {
   sendMessage: {
-    input: "string",
+    input: t.string,
     output: null,
   },
 };
 
 type ChatApi = {
   sendMessage: {
-    input: "string";
+    input: t.stringType;
     output: null;
   };
 };

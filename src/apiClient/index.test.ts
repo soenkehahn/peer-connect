@@ -2,6 +2,7 @@ import { AddressInfo, WebSocketServer } from "ws";
 import { runServer } from "../server";
 import { expectToHang, waitFor } from "../utils";
 import { connect, ToPeer } from ".";
+import * as t from "./types";
 
 jest.mock("../webrtcClient/webrtcAdapter");
 
@@ -22,8 +23,8 @@ describe("apiClient", () => {
   });
 
   it("allows to find a peer by api", async () => {
-    const MyApi: { sendMessage: { input: "string"; output: null } } = {
-      sendMessage: { input: "string", output: null },
+    const MyApi: { sendMessage: { input: t.stringType; output: null } } = {
+      sendMessage: { input: t.string, output: null },
     };
     const aReceived: Array<string> = [];
     const aServer = {
@@ -66,21 +67,21 @@ describe("apiClient", () => {
   test("more complex apis", async () => {
     type MyApi = {
       sendMessage: {
-        input: { message: "string"; priority: "number" };
-        output: { read: "string" };
+        input: { message: t.stringType; priority: "number" };
+        output: { read: t.stringType };
       };
       announceStatus: {
-        input: "string";
+        input: t.stringType;
         output: null;
       };
     };
     const myApi: MyApi = {
       sendMessage: {
-        input: { message: "string", priority: "number" },
-        output: { read: "string" },
+        input: { message: t.string, priority: "number" },
+        output: { read: t.string },
       },
       announceStatus: {
-        input: "string",
+        input: t.string,
         output: null,
       },
     };
@@ -144,13 +145,13 @@ describe("apiClient", () => {
   test("asymmetric apis", async () => {
     type AApi = {
       callA: {
-        input: "string";
+        input: t.stringType;
         output: null;
       };
     };
     const aApi: AApi = {
       callA: {
-        input: "string",
+        input: t.string,
         output: null,
       },
     };

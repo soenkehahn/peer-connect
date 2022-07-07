@@ -1,20 +1,39 @@
 import { checkNever } from "../utils";
 
+export type stringType = {
+  __tag: "string";
+};
+export const string: stringType = { __tag: "string" };
+const isStringType = (input: unknown): input is stringType =>
+  (input as stringType).__tag === "string";
+
 export type Type =
-  | "string"
+  | stringType
   | "number"
   | null
   | {
       [key: string]: Type;
     };
 
+export type ToType<T extends Type> = T extends stringType
+  ? string
+  : T extends "number"
+  ? number
+  : T extends null
+  ? null
+  : T extends { [key: string]: Type }
+  ? {
+      [Key in keyof T]: ToType<T[Key]>;
+    }
+  : never;
+
 const typeToString = (typ: Type): string => {
-  if (typ === "string") {
+  if (typ === null) {
+    return "null";
+  } else if (isStringType(typ)) {
     return "string";
   } else if (typ === "number") {
     return "number";
-  } else if (typ === null) {
-    return "null";
   } else if (typeof typ === "object") {
     if (Object.keys(typ).length === 0) {
       return "{}";
@@ -30,18 +49,6 @@ const typeToString = (typ: Type): string => {
     throw "impossible";
   }
 };
-
-export type ToType<T extends Type> = T extends "string"
-  ? string
-  : T extends "number"
-  ? number
-  : T extends null
-  ? null
-  : T extends { [key: string]: Type }
-  ? {
-      [Key in keyof T]: ToType<T[Key]>;
-    }
-  : never;
 
 export const parseJSON = <T extends Type>(typ: T, json: string): ToType<T> => {
   const value: unknown = JSON.parse(json);
@@ -61,16 +68,16 @@ const isOfType = <T extends Type>(
   typ: T,
   value: unknown
 ): value is ToType<T> => {
-  if (typ === "string") {
+  if (typ === null) {
+    if (value !== null) {
+      return false;
+    }
+  } else if (isStringType(typ)) {
     if (typeof value !== "string") {
       return false;
     }
   } else if (typ === "number") {
     if (typeof value !== "number") {
-      return false;
-    }
-  } else if (typ === null) {
-    if (value !== null) {
       return false;
     }
   } else if (typeof typ === "object") {

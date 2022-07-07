@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import * as ReactDOM from "react-dom/client";
 import { connect, ToPeer } from "../src/apiClient";
 import React from "react";
+import * as t from "../src/apiClient/types";
 
 const App = () => {
   return (
@@ -15,14 +16,14 @@ const App = () => {
 
 const pingApi: PingApi = {
   ping: {
-    input: "string",
+    input: t.string,
     output: null,
   },
 };
 
 type PingApi = {
   ping: {
-    input: "string";
+    input: t.stringType;
     output: null;
   };
 };
