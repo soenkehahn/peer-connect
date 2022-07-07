@@ -14,6 +14,13 @@ export const number: numberType = { __tag: "number" };
 const isNumberType = (input: unknown): input is numberType =>
   (input as numberType).__tag === "number";
 
+type booleanType = {
+  __tag: "boolean";
+};
+export const boolean: booleanType = { __tag: "boolean" };
+const isBooleanType = (input: unknown): input is booleanType =>
+  (input as booleanType).__tag === "boolean";
+
 type literalType<T> = {
   __tag: "literal";
   literal: T;
@@ -47,6 +54,7 @@ const isUnionType = <A, B>(input: unknown): input is unionType<A, B> =>
 export type Type<T = never, U = never> =
   | stringType
   | numberType
+  | booleanType
   | literalType<T>
   | unionType<T, U>
   | null
@@ -79,6 +87,8 @@ const typeToString = <U, V>(typ: Type<U, V>): string => {
     return "string";
   } else if (isNumberType(typ)) {
     return "number";
+  } else if (isBooleanType(typ)) {
+    return "boolean";
   } else if (isLiteralType(typ)) {
     return JSON.stringify(typ.literal);
   } else if (isUnionType(typ)) {
@@ -126,17 +136,13 @@ const isOfType = <T extends Type<U, V>, U, V>(
   value: unknown
 ): value is ToType<T, U, V> => {
   if (typ === null) {
-    if (value !== null) {
-      return false;
-    }
+    return value === null;
   } else if (isStringType(typ)) {
-    if (typeof value !== "string") {
-      return false;
-    }
+    return typeof value === "string";
   } else if (isNumberType(typ)) {
-    if (typeof value !== "number") {
-      return false;
-    }
+    return typeof value === "number";
+  } else if (isBooleanType(typ)) {
+    return typeof value === "boolean";
   } else if (isLiteralType(typ)) {
     return typ.literal === value;
   } else if (isUnionType(typ)) {
@@ -156,9 +162,9 @@ const isOfType = <T extends Type<U, V>, U, V>(
         return false;
       }
     }
+    return true;
   } else {
     checkNever(typ);
     throw "impossible";
   }
-  return true;
 };

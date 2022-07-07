@@ -32,6 +32,19 @@ describe("parseJSON", () => {
     });
   });
 
+  describe("booleans", () => {
+    test("valid booleans", () => {
+      expect(parseJSON(t.boolean, "true")).toEqual(true);
+      expect(parseJSON(t.boolean, "false")).toEqual(false);
+    });
+
+    test("invalid booleans", () => {
+      expect(() => parseJSON(t.boolean, '"foo"')).toThrow(
+        'expected: boolean, got: "foo"'
+      );
+    });
+  });
+
   describe("null", () => {
     test("valid null", () => {
       expect(parseJSON(null, "null")).toEqual(null);
