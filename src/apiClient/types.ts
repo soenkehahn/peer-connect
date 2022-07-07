@@ -75,7 +75,7 @@ export type ToType<T> = T extends stringType
   ? ToType<U> | ToType<V>
   : T extends null
   ? null
-  : T extends { [key: string]: Type }
+  : T extends { [key: string]: Type<infer _, infer _> }
   ? {
       [Key in keyof T]: ToType<T[Key]>;
     }

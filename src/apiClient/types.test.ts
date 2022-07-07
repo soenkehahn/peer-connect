@@ -100,6 +100,37 @@ describe("parseJSON", () => {
         'expected: { foo: number }, got: {"foo":"bar"}'
       );
     });
+
+    test("object fields can have different union types", () => {
+      const typ = {
+        x: t.union(t.literal("foo"), t.literal("bar")),
+        y: t.union(t.literal("a"), t.literal("b")),
+      };
+      const ts: Array<ToType<typeof typ>> = [
+        { x: "foo", y: "a" },
+        { x: "bar", y: "b" },
+        { x: "foo", y: "b" },
+      ];
+      ts;
+    });
+
+    it("propagates parameterized types to field types correctly", () => {
+      const typ = {
+        x: t.union(t.literal("foo"), t.literal("bar")),
+        y: t.union(t.literal("a"), t.literal("b")),
+      };
+      const x: ToType<typeof typ> = { x: "foo", y: "a" };
+      type Typ = {
+        x: "foo" | "bar";
+        y: "a" | "b";
+      };
+      const y: Typ = x;
+      y;
+
+      // @ts-expect-error
+      const z: ToType<typeof typ> = { x: "foo", y: "foo" };
+      z;
+    });
   });
 
   describe("literal string types", () => {
@@ -148,17 +179,5 @@ describe("parseJSON", () => {
       const ts: Array<ToType<typeof typ>> = ["foo", "bar"];
       ts;
     });
-
-    // test("object fields can have different union types", () => {
-    //   const typ = {
-    //     x: t.union(t.literal("foo"), t.literal("bar")),
-    //     y: t.union(t.literal("a"), t.literal("b")),
-    //   };
-    //   const _ts: Array<ToType<typeof typ>> = [
-    //     { x: "foo", y: "a" },
-    //     { x: "bar", y: "b" },
-    //     { x: "foo", y: "b" },
-    //   ];
-    // });
   });
 });
